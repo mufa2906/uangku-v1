@@ -29,10 +29,57 @@ const IDR_CONFIG: CurrencyConfig = {
   },
 };
 
-// Additional currency configurations can be added here as needed
+const USD_CONFIG: CurrencyConfig = {
+  code: 'USD',
+  symbol: '$',
+  thousandSeparator: ',',
+  decimalSeparator: '.',
+  format: (amount: number): string => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  },
+};
+
+const EUR_CONFIG: CurrencyConfig = {
+  code: 'EUR',
+  symbol: '€',
+  thousandSeparator: '.',
+  decimalSeparator: ',',
+  format: (amount: number): string => {
+    return new Intl.NumberFormat('de-DE', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  },
+};
+
+const GBP_CONFIG: CurrencyConfig = {
+  code: 'GBP',
+  symbol: '£',
+  thousandSeparator: ',',
+  decimalSeparator: '.',
+  format: (amount: number): string => {
+    return new Intl.NumberFormat('en-GB', {
+      style: 'currency',
+      currency: 'GBP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  },
+};
+
+// Additional currency configurations
 const CURRENCY_CONFIGS: Record<string, CurrencyConfig> = {
   IDR: IDR_CONFIG,
-  // Other currencies can be added here in the future
+  USD: USD_CONFIG,
+  EUR: EUR_CONFIG,
+  GBP: GBP_CONFIG,
 };
 
 /**
