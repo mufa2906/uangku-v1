@@ -38,6 +38,25 @@ All notable changes to this project will be documented in this file.
 - Added proper error handling for database interactions
 - Added documentation for Clerk production deployment limitations (vercel.app domains)
 
+# [Unreleased] - Currency Support Feature
+
+## Added
+- Added comprehensive currency support with IDR as default
+- Added support for USD, EUR, GBP, SGD, THB, MYR currencies
+- Created currency utility library with locale-specific formatting
+- Implemented CurrencyContext for managing currency preferences
+- Added dedicated Settings page for currency selection
+- Enhanced profile page to display current currency
+- Added localStorage persistence for currency preferences
+- Added success feedback when currency is changed
+- Added proper contrast and visibility in both light and dark modes
+
+## Changed
+- Updated dashboard and transactions pages to use currency context
+- Improved text contrast in settings and profile pages
+- Enhanced UI/UX for currency selection with better visual feedback
+- Added regional currencies relevant to Southeast Asian market
+
 ### Development Process
 - Identified and resolved multiple TypeScript compilation errors that prevented Vercel builds
 - Ensured all API routes have proper type checking and validation

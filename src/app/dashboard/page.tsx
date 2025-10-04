@@ -10,6 +10,7 @@ import { FloatingButton } from '@/components/ui/floating-button';
 import { Plus } from 'lucide-react';
 import TransactionFormSheet from '@/components/transactions/TransactionFormSheet';
 import AppBottomNav from '@/components/shells/AppBottomNav';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface WeeklyDataPoint {
   date: string;
@@ -32,6 +33,7 @@ interface InsightData {
 
 export default function DashboardPage() {
   const { userId } = useAuth();
+  const { formatCurrency } = useCurrency();
   const [insights, setInsights] = useState<InsightData | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -107,13 +109,6 @@ export default function DashboardPage() {
     } catch (error) {
       console.error('Error saving transaction:', error);
     }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
   };
 
   const formatPercentage = (value: number) => {

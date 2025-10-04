@@ -6,6 +6,9 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useState } from 'react';
+import Link from 'next/link';
+import { Settings } from 'lucide-react';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import AppBottomNav from '@/components/shells/AppBottomNav';
 
 export default function ProfilePage() {
@@ -23,6 +26,7 @@ export default function ProfilePage() {
   }
 
   const { signOut } = useClerk();
+  const { currencySymbol } = useCurrency();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const handleLogout = async () => {
@@ -62,15 +66,28 @@ export default function ProfilePage() {
             
             {/* Account Management Section */}
             <div className="mt-8 pt-6 border-t border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Account Management</h3>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button
-                  variant="destructive"
-                  onClick={() => setShowLogoutDialog(true)}
-                  className="w-full sm:w-auto"
-                >
-                  Sign Out
-                </Button>
+              <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Account Management</h3>
+              <div className="space-y-4">
+                <div className="p-3 bg-gray-50 rounded-md">
+                  <p className="text-sm text-gray-600">
+                    Current Currency: <span className="font-semibold">{currencySymbol}</span>
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link href="/settings" className="w-full sm:w-auto">
+                    <Button variant="outline" className="w-full sm:w-auto">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Settings
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="destructive"
+                    onClick={() => setShowLogoutDialog(true)}
+                    className="w-full sm:w-auto"
+                  >
+                    Sign Out
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>
