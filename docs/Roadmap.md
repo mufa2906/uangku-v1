@@ -10,12 +10,12 @@ A personal finance tracking application that helps users manage their finances w
 - ✅ Transaction CRUD operations
 - ✅ Category management
 - ✅ Dashboard with insights
-- 🔄 Logout functionality (in progress)
+- ✅ Logout functionality with confirmation
 
 ### Phase 2: Essential Features
 - 🗓️ Currency support (IDR-focused)
 - 🗓️ Budgeting tools (50/30/20, zero-based, envelope method)
-- 🗓️ Logout and account switching
+- 🗓️ Account switching (if needed after logout improvement)
 
 ### Phase 3: Advanced Features
 - 🗓️ AI-powered transaction entry (natural language processing)

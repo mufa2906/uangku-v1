@@ -31,8 +31,10 @@ This document provides an overview of the Uangku application development approac
 - Obtain approval before merging
 
 ## Current Feature Branches
-- `feature/add-logout-functionality` - Adding logout capability
 - `feature/add-budgeting-functionality` - Budgeting tools implementation
+
+## Completed Features
+- `feature/add-logout-functionality` (merged) - Added logout capability with confirmation dialog
 
 ## Documentation Structure
 - `/docs/Roadmap.md` - High-level feature roadmap
