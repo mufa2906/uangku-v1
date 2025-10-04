@@ -64,7 +64,7 @@ export default function ProfilePage() {
             
             {/* Account Management Section */}
             <div className="mt-8 pt-6 border-t border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Account Management</h3>
+              <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Account Management</h3>
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link href="/settings" className="w-full sm:w-auto">
                   <Button variant="outline" className="w-full sm:w-auto">
