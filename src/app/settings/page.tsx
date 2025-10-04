@@ -14,6 +14,9 @@ const SUPPORTED_CURRENCIES = [
   { code: 'USD', name: 'US Dollar', symbol: '$' },
   { code: 'EUR', name: 'Euro', symbol: '€' },
   { code: 'GBP', name: 'British Pound', symbol: '£' },
+  { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$' },
+  { code: 'THB', name: 'Thai Baht', symbol: '฿' },
+  { code: 'MYR', name: 'Malaysian Ringgit', symbol: 'RM' },
 ];
 
 export default function SettingsPage() {

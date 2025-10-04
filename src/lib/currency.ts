@@ -74,12 +74,60 @@ const GBP_CONFIG: CurrencyConfig = {
   },
 };
 
+const SGD_CONFIG: CurrencyConfig = {
+  code: 'SGD',
+  symbol: 'S$',
+  thousandSeparator: ',',
+  decimalSeparator: '.',
+  format: (amount: number): string => {
+    return new Intl.NumberFormat('en-SG', {
+      style: 'currency',
+      currency: 'SGD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  },
+};
+
+const THB_CONFIG: CurrencyConfig = {
+  code: 'THB',
+  symbol: '฿',
+  thousandSeparator: ',',
+  decimalSeparator: '.',
+  format: (amount: number): string => {
+    return new Intl.NumberFormat('th-TH', {
+      style: 'currency',
+      currency: 'THB',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  },
+};
+
+const MYR_CONFIG: CurrencyConfig = {
+  code: 'MYR',
+  symbol: 'RM',
+  thousandSeparator: ',',
+  decimalSeparator: '.',
+  format: (amount: number): string => {
+    return new Intl.NumberFormat('en-MY', {
+      style: 'currency',
+      currency: 'MYR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  },
+};
+
 // Additional currency configurations
 const CURRENCY_CONFIGS: Record<string, CurrencyConfig> = {
   IDR: IDR_CONFIG,
   USD: USD_CONFIG,
   EUR: EUR_CONFIG,
   GBP: GBP_CONFIG,
+  SGD: SGD_CONFIG,
+  THB: THB_CONFIG,
+  MYR: MYR_CONFIG,
 };
 
 /**
