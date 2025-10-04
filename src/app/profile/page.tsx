@@ -4,6 +4,8 @@
 import { useUser, useClerk } from '@clerk/nextjs';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { useState } from 'react';
 import AppBottomNav from '@/components/shells/AppBottomNav';
 
 export default function ProfilePage() {
@@ -21,6 +23,15 @@ export default function ProfilePage() {
   }
 
   const { signOut } = useClerk();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await signOut({ redirectUrl: '/sign-in' });
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   return (
     <div className="pb-20"> {/* Space for bottom nav */}
@@ -55,7 +66,7 @@ export default function ProfilePage() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   variant="destructive"
-                  onClick={() => signOut({ redirectUrl: '/sign-in' })}
+                  onClick={() => setShowLogoutDialog(true)}
                   className="w-full sm:w-auto"
                 >
                   Sign Out
@@ -65,6 +76,18 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Logout Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showLogoutDialog}
+        onClose={() => setShowLogoutDialog(false)}
+        onConfirm={handleLogout}
+        title="Sign Out"
+        description="Are you sure you want to sign out? You will need to sign back in to access your financial data."
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        variant="destructive"
+      />
 
       {/* Bottom Navigation */}
       <AppBottomNav />
