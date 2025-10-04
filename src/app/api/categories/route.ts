@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     // Check uniqueness by comparing lowercase versions in memory
     const duplicateCategory = allUserCategories.find(
-      cat => cat.name.toLowerCase() === name.toLowerCase()
+      cat => cat.name && cat.name.toLowerCase() === name.toLowerCase()
     );
 
     if (duplicateCategory) {

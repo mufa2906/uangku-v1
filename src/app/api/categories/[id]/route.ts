@@ -58,7 +58,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         }
         
         // Check if a category with the same name and type already exists for the user (case-insensitive)
-        if (updates.type) {
+        if (updates.type && updates.name) {
           const allUserCategories = await db
             .select()
             .from(categories)
@@ -71,7 +71,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
           // Check uniqueness by comparing lowercase versions in memory
           const duplicateCategory = allUserCategories.find(
-            cat => cat.id !== id && cat.name.toLowerCase() === updates.name.toLowerCase()
+            cat => cat.id !== id && cat.name && 
+                   cat.name.toLowerCase() === updates.name.toLowerCase()
           );
 
           if (duplicateCategory) {
