@@ -72,7 +72,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
           // Check uniqueness by comparing lowercase versions in memory
           const duplicateCategory = allUserCategories.find(
             cat => cat.id !== id && cat.name && 
-                   cat.name.toLowerCase() === updates.name.toLowerCase()
+                   cat.name.toLowerCase() === (updates.name as string).toLowerCase()
           );
 
           if (duplicateCategory) {
