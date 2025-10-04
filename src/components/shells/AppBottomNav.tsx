@@ -3,7 +3,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Home, Plus, FileText, Folder, User } from 'lucide-react';
+import { Home, Plus, FileText, Folder, User, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function AppBottomNav() {

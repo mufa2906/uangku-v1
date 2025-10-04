@@ -6,6 +6,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useState } from 'react';
+import Link from 'next/link';
+import { Settings } from 'lucide-react';
 import AppBottomNav from '@/components/shells/AppBottomNav';
 
 export default function ProfilePage() {
@@ -64,6 +66,12 @@ export default function ProfilePage() {
             <div className="mt-8 pt-6 border-t border-gray-200">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Account Management</h3>
               <div className="flex flex-col sm:flex-row gap-3">
+                <Link href="/settings" className="w-full sm:w-auto">
+                  <Button variant="outline" className="w-full sm:w-auto">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </Button>
+                </Link>
                 <Button
                   variant="destructive"
                   onClick={() => setShowLogoutDialog(true)}

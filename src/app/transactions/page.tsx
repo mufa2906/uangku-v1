@@ -9,9 +9,11 @@ import { FloatingButton } from '@/components/ui/floating-button';
 import { Plus, Search, Filter } from 'lucide-react';
 import TransactionFormSheet from '@/components/transactions/TransactionFormSheet';
 import AppBottomNav from '@/components/shells/AppBottomNav';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 export default function TransactionsPage() {
   const { userId } = useAuth();
+  const { formatCurrency } = useCurrency();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -110,13 +112,6 @@ export default function TransactionsPage() {
     } catch (error) {
       console.error('Error saving transaction:', error);
     }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
   };
 
   // Filter transactions based on search term and type
