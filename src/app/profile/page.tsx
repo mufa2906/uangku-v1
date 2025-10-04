@@ -1,8 +1,9 @@
 // src/app/profile/page.tsx
 'use client';
 
-import { useUser } from '@clerk/nextjs';
+import { useUser, useClerk } from '@clerk/nextjs';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import AppBottomNav from '@/components/shells/AppBottomNav';
 
 export default function ProfilePage() {
@@ -18,6 +19,8 @@ export default function ProfilePage() {
       </div>
     );
   }
+
+  const { signOut } = useClerk();
 
   return (
     <div className="pb-20"> {/* Space for bottom nav */}
@@ -43,6 +46,20 @@ export default function ProfilePage() {
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Member since</h3>
                 <p className="text-lg">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</p>
+              </div>
+            </div>
+            
+            {/* Account Management Section */}
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Account Management</h3>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  variant="destructive"
+                  onClick={() => signOut({ redirectUrl: '/sign-in' })}
+                  className="w-full sm:w-auto"
+                >
+                  Sign Out
+                </Button>
               </div>
             </div>
           </CardContent>
