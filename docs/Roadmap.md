@@ -13,7 +13,7 @@ A personal finance tracking application that helps users manage their finances w
 - ✅ Logout functionality with confirmation
 
 ### Phase 2: Essential Features
-- 🗓️ Currency support (IDR-focused)
+- ✅ Currency support (IDR-focused, with regional currencies)
 - 🗓️ Budgeting tools (50/30/20, zero-based, envelope method)
 - 🗓️ Account switching (if needed after logout improvement)
 
