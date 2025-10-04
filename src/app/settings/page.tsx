@@ -1,10 +1,11 @@
 // src/app/settings/page.tsx
 'use client';
 
+import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { Check, Settings } from 'lucide-react';
+import { Check } from 'lucide-react';
 import AppBottomNav from '@/components/shells/AppBottomNav';
 
 // Supported currencies
@@ -17,21 +18,26 @@ const SUPPORTED_CURRENCIES = [
 
 export default function SettingsPage() {
   const { currency, setCurrency, currencySymbol } = useCurrency();
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleCurrencyChange = (currencyCode: string) => {
     setCurrency(currencyCode);
+    setSuccessMessage(`Currency changed to ${currencyCode} successfully!`);
+    // Clear the success message after 3 seconds
+    setTimeout(() => setSuccessMessage(null), 3000);
   };
 
   return (
     <div className="pb-20"> {/* Space for bottom nav */}
       <div className="p-4 max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Settings</h1>
+        <div className="flex items-center mb-6">
+          <h1 className="text-2xl font-bold flex-1">Settings</h1>
+        </div>
 
         {/* Currency Settings */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
               Currency Settings
             </CardTitle>
           </CardHeader>
@@ -45,7 +51,7 @@ export default function SettingsPage() {
                 {SUPPORTED_CURRENCIES.map((cur) => (
                   <Button
                     key={cur.code}
-                    variant={currency === cur.code ? 'default' : 'outline'}
+                    variant={currency === cur.code ? 'secondary' : 'outline'}
                     className="w-full justify-between"
                     onClick={() => handleCurrencyChange(cur.code)}
                   >
@@ -55,10 +61,16 @@ export default function SettingsPage() {
                         {cur.code} - {cur.symbol}
                       </div>
                     </div>
-                    {currency === cur.code && <Check className="h-5 w-5" />}
+                    {currency === cur.code && <Check className="h-5 w-5 text-blue-500" />}
                   </Button>
                 ))}
               </div>
+              
+              {successMessage && (
+                <div className="mt-4 p-3 bg-green-50 text-green-700 rounded-md">
+                  <p className="text-sm">{successMessage}</p>
+                </div>
+              )}
               
               <div className="mt-4 p-3 bg-blue-50 rounded-md">
                 <p className="text-sm">
