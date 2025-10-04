@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { transactions, categories } from '@/lib/schema';
 import { auth } from '@clerk/nextjs/server';
-import { and, eq, desc, asc, count } from 'drizzle-orm';
+import { and, eq, desc, asc, count, gte, lte } from 'drizzle-orm';
 import { CreateTransactionSchema } from '@/lib/zod';
 
 export async function GET(request: NextRequest) {
@@ -24,33 +24,22 @@ export async function GET(request: NextRequest) {
     const sortOrder = request.nextUrl.searchParams.get('sortOrder') || 'desc';
 
     // Get filter parameters
-    const type = request.nextUrl.searchParams.get('type') || '';
-    const categoryId = request.nextUrl.searchParams.get('categoryId') || '';
-    const startDate = request.nextUrl.searchParams.get('startDate') || '';
-    const endDate = request.nextUrl.searchParams.get('endDate') || '';
+    const typeParam = request.nextUrl.searchParams.get('type');
+    const type = typeParam && (typeParam === 'income' || typeParam === 'expense') ? typeParam : undefined;
+    const categoryId = request.nextUrl.searchParams.get('categoryId') || undefined;
+    const startDate = request.nextUrl.searchParams.get('startDate') || undefined;
+    const endDate = request.nextUrl.searchParams.get('endDate') || undefined;
 
     // Build the where conditions
-    let whereCondition = eq(transactions.userId, userId);
+    const filters = [
+      eq(transactions.userId, userId),
+      type ? eq(transactions.type, type) : undefined,
+      categoryId ? eq(transactions.categoryId, categoryId) : undefined,
+      startDate ? gte(transactions.date, new Date(startDate)) : undefined,
+      endDate ? lte(transactions.date, new Date(endDate)) : undefined,
+    ].filter(Boolean) as any[];
     
-    if (type) {
-      whereCondition = and(whereCondition, eq(transactions.type, type));
-    }
-    
-    if (categoryId) {
-      whereCondition = and(whereCondition, eq(transactions.categoryId, categoryId));
-    }
-    
-    if (startDate) {
-      whereCondition = and(whereCondition, 
-        new Date(transactions.date) >= new Date(startDate)
-      );
-    }
-    
-    if (endDate) {
-      whereCondition = and(whereCondition, 
-        new Date(transactions.date) <= new Date(endDate)
-      );
-    }
+    const whereCondition = filters.length > 1 ? and(...filters) : filters[0];
 
     // Build the query
     let orderCondition = desc(transactions.date);
@@ -126,7 +115,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { categoryId, type, amount, note, date } = parsedBody.data;
+    const validatedData = parsedBody.data as {
+      categoryId?: string | null;
+      type: 'income' | 'expense';
+      amount: string;
+      note?: string | null;
+      date: string;
+    };
+    const { categoryId, type, amount, note, date } = validatedData;
 
     // If no category ID is provided, we'll create a default category
     let validCategoryId = categoryId;

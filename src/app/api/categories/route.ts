@@ -15,14 +15,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Get filter parameters
-    const type = request.nextUrl.searchParams.get('type') || '';
+    const typeParam = request.nextUrl.searchParams.get('type');
+    const type = typeParam && (typeParam === 'income' || typeParam === 'expense') ? typeParam : undefined;
 
     // Build the where conditions
-    let whereCondition = eq(categories.userId, userId);
-    
-    if (type) {
-      whereCondition = and(whereCondition, eq(categories.type, type));
-    }
+    const whereCondition = type 
+      ? and(eq(categories.userId, userId), eq(categories.type, type))
+      : eq(categories.userId, userId);
 
     const categoriesResult = await db
       .select()
@@ -62,7 +61,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, icon, type } = parsedBody.data;
+    const validatedData = parsedBody.data as {
+      name: string;
+      icon?: string | null;
+      type: 'income' | 'expense';
+    };
+    const { name, icon, type } = validatedData;
 
     // Check if a category with the same name and type already exists for the user (case-insensitive)
     // We need to retrieve all categories for this user and type, then check in memory

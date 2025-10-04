@@ -13,10 +13,8 @@ type Props = {
 export function Providers({ children }: Props) {
   const { resolvedTheme } = useTheme()
   
-  const clerkTheme: Theme = resolvedTheme === 'dark' ? dark : undefined
-
   return (
-    <ClerkProvider appearance={{ baseTheme: clerkTheme }}>
+    <ClerkProvider appearance={resolvedTheme === 'dark' ? { baseTheme: dark } : {}}>
       {children}
     </ClerkProvider>
   )

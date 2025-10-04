@@ -15,10 +15,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useUser } from '@clerk/nextjs';
 import { Transaction, Category } from '@/types';
 
+// Type for transaction data when submitting to the API
+type TransactionSubmitData = Omit<Transaction, 'id' | 'userId' | 'createdAt' | 'categoryName'>;
+
 interface TransactionFormSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: Omit<Transaction, 'id' | 'userId' | 'createdAt'>) => void;
+  onSubmit: (data: TransactionSubmitData) => void;
   transaction?: Transaction | null;
   categories: Category[];
 }
@@ -113,9 +116,8 @@ export default function TransactionFormSheet({
             <Select 
               value={formData.type} 
               onValueChange={(value) => handleSelectChange('type', value as 'income' | 'expense')}
-              className="col-span-3"
             >
-              <SelectTrigger>
+              <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
@@ -148,9 +150,8 @@ export default function TransactionFormSheet({
             <Select 
               value={formData.categoryId} 
               onValueChange={(value) => handleSelectChange('categoryId', value)}
-              className="col-span-3"
             >
-              <SelectTrigger>
+              <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
