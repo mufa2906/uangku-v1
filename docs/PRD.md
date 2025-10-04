@@ -30,14 +30,16 @@
 ## 7. Risiko
 - Vendor lock-in (Clerk, Supabase) → antisipasi dengan lapisan adapter.
 - Peningkatan biaya jika skala besar → monitoring metrik & rencana upgrade.
+- Limitasi domain development di Clerk (tidak mendukung vercel.app untuk production).
 
-## 8. Timeline (MVP)
-- Minggu 1: Setup, Auth, Data model, Kategori
-- Minggu 2: Transaksi CRUD, Dashboard ringkas
-- Minggu 3: Insight & polishing, deploy + observability
+## 8. Deployment
+- Dideploy di Vercel dengan basis domain sendiri (bukan vercel.app) untuk production.
+- Untuk testing/staging, bisa menggunakan domain vercel.app dengan development keys Clerk.
 
 ## 9. Acceptance Criteria (MVP)
 - Login/Sign up/Logout berjalan
 - Buat/ubah/hapus transaksi & kategori
 - Dashboard tampil metrik + chart sederhana
 - API dilindungi (user hanya akses datanya)
+- Aplikasi bisa build dan deploy di Vercel tanpa error
+- Type safety terpenuhi sesuai dengan TypeScript strict mode

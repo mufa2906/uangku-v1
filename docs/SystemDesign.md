@@ -27,33 +27,44 @@ Client ⇄ Next.js (Route Handlers) ⇄ Drizzle (pg) ⇄ Supabase Postgres
 │ │ ├─ transactions/[id]/route.ts # PUT, DELETE
 │ │ ├─ categories/route.ts
 │ │ └─ categories/[id]/route.ts
-│ └─ layout.tsx
+│ ├─ layout.tsx
+│ └─ providers.tsx # Clerk & theme providers
 ├─ components/
 │ ├─ ui/ # shadcn generated components
 │ ├─ charts/ # Recharts components
-│ └─ shells/ # layout cards, bottom-nav
+│ ├─ shells/ # layout cards, bottom-nav
+│ └─ transactions/ # transaction-specific components
 ├─ lib/
 │ ├─ db.ts # pg pool + drizzle instance
 │ ├─ auth.ts # Clerk helpers
-│ ├─ zod.ts # schemas
-│ └─ utils.ts
+│ ├─ constants.ts # app constants
+│ ├─ schema.ts # drizzle db schema
+│ ├─ zod.ts # validation schemas
+│ └─ utils.ts # utility functions
 ├─ server/
-│ ├─ repos/ # query access (transactions, categories)
 │ └─ services/ # domain logic (insight, summaries)
-└─ drizzlemigrations/ # drizzle-kit output
+├─ types/ # TypeScript interfaces
+└─ drizzle/ # drizzle migrations and schema
 
 ## Keamanan & Akses
 - Validasi user via Clerk `auth()` di setiap handler.
 - Query selalu terikat `userId` (multi-tenant isolation).
 - Zod untuk validasi payload; rate limiting (opsional) via middleware.
+- Middleware untuk proteksi route yang hanya bisa diakses authenticated user.
 
 ## Environment Variables
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
 - `CLERK_SECRET_KEY`
 - `DATABASE_URL` (postgres)
-- `NEXTAUTH_URL` (jika diperlukan), `NEXT_PUBLIC_APP_URL` (opsional)
+- `NEXT_PUBLIC_APP_URL` (opsional untuk redirect URL)
 
 ## Skala & Performa
 - Index di `transactions(date, user_id)`, `transactions(category_id)`.
 - Pagination/limit untuk listing.
 - Edge runtime untuk GET ringan (opsional), Node untuk operasi DB berat.
+- Type checking strict untuk mencegah runtime errors.
+
+## Deployment & Build
+- Aplikasi harus bisa build di Vercel tanpa error TypeScript.
+- Production build tidak bisa menggunakan domain vercel.app jika ingin menggunakan Clerk production keys.
+- Untuk production perlu custom domain sendiri.

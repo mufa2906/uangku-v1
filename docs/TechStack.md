@@ -25,13 +25,20 @@
 - Testing: Vitest/Jest (opsional)
 - Types: TypeScript strict
 - Git: Conventional Commits
+- Dependencies: Latest stable versions compatible with each other
 
 ## Deploy
 - **Vercel** (Next.js app & API)
 - **Supabase** (managed Postgres)
 
+## Build & Type Safety
+- TypeScript strict mode
+- Proper type definitions for all API routes and components
+- Zod schema validation for all user inputs
+- Environment variable type safety
+
 ## ENV (contoh)
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=...`
 - `CLERK_SECRET_KEY=...`
 - `DATABASE_URL=postgres://...`
-- `NEXT_PUBLIC_APP_URL=https://uangku.vercel.app`
+- `NEXT_PUBLIC_APP_URL=https://uangku.vercel.app` (diperlukan custom domain untuk production Clerk)

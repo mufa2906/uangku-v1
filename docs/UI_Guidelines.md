@@ -33,3 +33,7 @@
 - `components/shells/AppBottomNav.tsx`
 - `components/transactions/TransactionFormSheet.tsx`
 - `components/charts/WeeklyBar.tsx`
+
+## Theme Support
+- Mendukung light/dark mode melalui next-themes
+- Clerk components mengikuti tema sistem (dengan fallback ke light mode default)
