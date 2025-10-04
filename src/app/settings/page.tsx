@@ -67,12 +67,12 @@ export default function SettingsPage() {
               </div>
               
               {successMessage && (
-                <div className="mt-4 p-3 bg-green-50 text-green-700 rounded-md">
+                <div className="mt-4 p-3 bg-green-100 text-green-800 rounded-md border border-green-200">
                   <p className="text-sm">{successMessage}</p>
                 </div>
               )}
               
-              <div className="mt-4 p-3 bg-blue-50 rounded-md">
+              <div className="mt-4 p-3 bg-blue-50 text-blue-900 rounded-md">
                 <p className="text-sm">
                   Current selection: <span className="font-semibold">{currency}</span> ({currencySymbol})
                 </p>
