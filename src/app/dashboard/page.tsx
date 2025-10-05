@@ -11,6 +11,7 @@ import { Plus } from 'lucide-react';
 import TransactionFormSheet from '@/components/transactions/TransactionFormSheet';
 import AppBottomNav from '@/components/shells/AppBottomNav';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import BudgetSummary from '@/components/budgets/BudgetSummary';
 
 interface WeeklyDataPoint {
   date: string;
@@ -162,6 +163,11 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Budget Summary */}
+        <div className="mb-6">
+          <BudgetSummary />
         </div>
 
         {/* Weekly Trend Card */}
