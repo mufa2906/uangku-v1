@@ -84,10 +84,11 @@ export default function BudgetFormSheet({
     setIsSubmitting(true);
 
     try {
-      // Filter out empty categoryId
+      // Filter out empty categoryId - only include if it has a valid value
+      const { categoryId, ...rest } = formData;
       const submitData = {
-        ...formData,
-        ...(formData.categoryId && { categoryId: formData.categoryId }), // Only include categoryId if it has a value
+        ...rest,
+        ...(categoryId && categoryId !== '' ? { categoryId } : {}), // Only include categoryId if it has a non-empty value
         amount: formData.amount,
       };
 
