@@ -20,3 +20,16 @@ export interface Category {
   type: 'income' | 'expense';
   createdAt: string; // ISO string format
 }
+
+export interface Budget {
+  id: string;
+  userId: string;
+  categoryId: string;
+  amount: string;
+  currency: string;
+  period: 'weekly' | 'monthly' | 'yearly';
+  startDate: string; // ISO date format
+  endDate: string; // ISO date format
+  isActive: boolean;
+  createdAt: string; // ISO string format
+}
