@@ -36,6 +36,7 @@ This document provides an overview of the Uangku application development approac
 ## Completed Features
 - `feature/add-logout-functionality` (merged) - Added logout capability with confirmation dialog
 - `feature/add-currency-support` (merged) - Added comprehensive currency support with regional currencies
+- `feature/add-budgeting-tools` (in review) - Added flexible budgeting tools with category-linked and custom budgets
 
 ## Documentation Structure
 - `/docs/Roadmap.md` - High-level feature roadmap

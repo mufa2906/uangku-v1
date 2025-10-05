@@ -38,6 +38,46 @@ All notable changes to this project will be documented in this file.
 - Added proper error handling for database interactions
 - Added documentation for Clerk production deployment limitations (vercel.app domains)
 
+# [Unreleased] - Budgeting Tools Feature
+
+## Added
+- Added flexible budgeting tools with support for both category-linked and custom named budgets
+- Implemented comprehensive budget database schema with optional categoryId, name, and description
+- Created full CRUD API routes for budgets (/api/budgets)
+- Added budget summary API endpoint for spending vs. budget calculations
+- Developed dedicated budgets page with listing and management functionality
+- Implemented BudgetFormSheet component for creating/editing budgets
+- Added BudgetProgressCard component with visual spending vs. budget representation
+- Created BudgetSummary component for dashboard overview
+- Added Progress component for budget visualization
+- Implemented responsive UI with status indicators (good/warning/critical)
+- Added visual feedback for budget health (color-coded progress bars)
+- Integrated budget summary into dashboard page
+- Added proper loading and error states
+- Created reusable visualization components for budget tracking
+- Implemented flexible budget architecture supporting both approaches
+- Added smart end date calculation with manual override capability
+- Enhanced budget summary calculations with real transaction data
+- Added proper currency formatting using CurrencyContext
+
+## Changed
+- Enhanced database schema with flexible budget fields (optional categoryId, name, description)
+- Updated API routes to handle flexible budget creation and updates
+- Improved UI components to show budget name or category name
+- Enhanced form validation and error handling
+- Made category selection optional in budget form
+- Added name and description fields for custom budgets
+- Fixed budget summary calculation to handle nullable categoryId
+- Updated documentation to reflect flexible budget architecture
+- Enhanced user experience with better visual feedback
+
+## Fixed
+- Fixed API route compilation errors with nullable fields
+- Resolved budget summary calculation issues with nullable categoryId
+- Fixed build issues with nullable fields in TypeScript definitions
+- Addressed date parsing issues in budget API routes
+- Corrected form state management with new optional fields
+
 # [Unreleased] - Currency Support Feature
 
 ## Added
