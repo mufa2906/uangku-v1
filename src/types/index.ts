@@ -24,7 +24,9 @@ export interface Category {
 export interface Budget {
   id: string;
   userId: string;
-  categoryId: string;
+  categoryId: string | null;
+  name: string | null;
+  description: string | null;
   amount: string;
   currency: string;
   period: 'weekly' | 'monthly' | 'yearly';

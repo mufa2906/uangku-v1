@@ -8,12 +8,14 @@ import { z } from 'zod';
 
 // Validation schema for creating/updating budgets
 const BudgetSchema = z.object({
-  categoryId: z.string().uuid(),
+  categoryId: z.string().uuid().optional(),
+  name: z.string().min(1).max(100).optional(),
+  description: z.string().optional(),
   amount: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Amount must be a valid number with up to 2 decimal places'),
   currency: z.string().length(3).optional(),
   period: z.enum(['weekly', 'monthly', 'yearly']),
-  startDate: z.string().datetime(),
-  endDate: z.string().datetime(),
+  startDate: z.string(), // Allow date strings (YYYY-MM-DD)
+  endDate: z.string(), // Allow date strings (YYYY-MM-DD)
   isActive: z.boolean().optional(),
 });
 
@@ -95,16 +97,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { categoryId, amount, currency, period, startDate, endDate, isActive } = parsedBody.data;
+    const { categoryId, name, description, amount, currency, period, startDate, endDate, isActive } = parsedBody.data;
 
-    // Verify that the category belongs to the user
-    const userCategory = await db
-      .select()
-      .from(categories)
-      .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)));
+    // Verify that the category belongs to the user (if categoryId is provided)
+    if (categoryId) {
+      const userCategory = await db
+        .select()
+        .from(categories)
+        .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)));
 
-    if (userCategory.length === 0) {
-      return new Response('Category not found or does not belong to user', { status: 404 });
+      if (userCategory.length === 0) {
+        return new Response('Category not found or does not belong to user', { status: 404 });
+      }
     }
 
     // Create the budget
@@ -112,12 +116,14 @@ export async function POST(request: NextRequest) {
       .insert(budgets)
       .values({
         userId,
-        categoryId,
+        categoryId: categoryId || null,
+        name: name || null,
+        description: description || null,
         amount,
         currency: currency || 'IDR',
         period,
-        startDate: new Date(startDate).toISOString().split('T')[0],
-        endDate: new Date(endDate).toISOString().split('T')[0],
+        startDate: startDate, // Already in YYYY-MM-DD format
+        endDate: endDate, // Already in YYYY-MM-DD format
         isActive: isActive !== undefined ? isActive : true,
       })
       .returning();

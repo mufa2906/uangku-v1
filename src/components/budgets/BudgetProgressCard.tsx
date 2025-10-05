@@ -44,7 +44,7 @@ export default function BudgetProgressCard({
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle className="text-lg">{budget.categoryName}</CardTitle>
+            <CardTitle className="text-lg">{budget.name || budget.categoryName || 'Unnamed Budget'}</CardTitle>
             <p className="text-sm text-gray-500 capitalize">{budget.period} budget</p>
           </div>
           <div className="flex gap-2">

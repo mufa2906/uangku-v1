@@ -30,8 +30,9 @@ export const budgets = pgTable("budgets", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: varchar("user_id").notNull(),
   categoryId: uuid("category_id")
-    .notNull()
-    .references(() => categories.id, { onDelete: "cascade" }),
+    .references(() => categories.id, { onDelete: "cascade" }), // Optional now
+  name: varchar("name", { length: 100 }), // For custom budget names
+  description: text("description"), // For budget descriptions
   amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
   currency: varchar("currency", { length: 3 }).notNull().default('IDR'),
   period: budgetPeriod("period").notNull(),

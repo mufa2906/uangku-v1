@@ -30,6 +30,11 @@ export default function AppBottomNav() {
       href: '/budgets',
       icon: Calendar,
     },
+    {
+      name: 'Profile',
+      href: '/profile',
+      icon: User,
+    },
   ];
 
   return (

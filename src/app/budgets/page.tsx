@@ -12,8 +12,8 @@ import { Budget, Category } from '@/types';
 import BudgetFormSheet from '@/components/budgets/BudgetFormSheet';
 
 interface BudgetWithCategory extends Budget {
-  categoryName: string;
-  categoryType: string;
+  categoryName: string | null;
+  categoryType: string | null;
 }
 
 export default function BudgetsPage() {
@@ -34,26 +34,28 @@ export default function BudgetsPage() {
   const fetchBudgetsAndCategories = async () => {
     try {
       setLoading(true);
+      setError(null);
       
-      // Fetch budgets
-      const budgetsResponse = await fetch('/api/budgets');
-      if (!budgetsResponse.ok) {
-        throw new Error('Failed to fetch budgets');
-      }
-      const budgetsData = await budgetsResponse.json();
-      
-      // Fetch categories
+      // Fetch categories first
       const categoriesResponse = await fetch('/api/categories');
       if (!categoriesResponse.ok) {
         throw new Error('Failed to fetch categories');
       }
       const categoriesData = await categoriesResponse.json();
+      setCategories(categoriesData);
+      
+      // Fetch budgets
+      const budgetsResponse = await fetch('/api/budgets');
+      if (!budgetsResponse.ok) {
+        const errorText = await budgetsResponse.text();
+        throw new Error(`Failed to fetch budgets: ${errorText || budgetsResponse.statusText}`);
+      }
+      const budgetsData = await budgetsResponse.json();
       
       setBudgets(budgetsData);
-      setCategories(categoriesData);
     } catch (err) {
       console.error('Error fetching data:', err);
-      setError('Failed to load data. Please try again.');
+      setError(`Failed to load data: ${(err as Error).message}. Please try again.`);
     } finally {
       setLoading(false);
     }
@@ -191,7 +193,7 @@ export default function BudgetsPage() {
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="text-lg">{budget.categoryName}</CardTitle>
+                      <CardTitle className="text-lg">{budget.name || budget.categoryName || 'Unnamed Budget'}</CardTitle>
                       <p className="text-sm text-gray-500 capitalize">{budget.period} budget</p>
                     </div>
                     <div className="flex gap-2">

@@ -33,6 +33,8 @@ export default function BudgetFormSheet({
   const { currency } = useCurrency();
   const [formData, setFormData] = useState({
     categoryId: '',
+    name: '',
+    description: '',
     amount: '',
     currency: currency,
     period: 'monthly' as 'weekly' | 'monthly' | 'yearly',
@@ -41,12 +43,15 @@ export default function BudgetFormSheet({
     isActive: true,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [manualEndDate, setManualEndDate] = useState(false);
 
   // Populate form when editing
   useEffect(() => {
     if (budget) {
       setFormData({
-        categoryId: budget.categoryId,
+        categoryId: budget.categoryId || '',
+        name: budget.name || '',
+        description: budget.description || '',
         amount: parseFloat(budget.amount).toString(),
         currency: budget.currency,
         period: budget.period,
@@ -56,16 +61,22 @@ export default function BudgetFormSheet({
       });
     } else {
       // Reset form for new budget
+      const today = new Date();
+      const endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0); // Last day of current month
       setFormData({
         categoryId: '',
+        name: '',
+        description: '',
         amount: '',
         currency: currency,
         period: 'monthly',
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0],
+        startDate: today.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
         isActive: true,
       });
     }
+    // Reset manual end date flag when opening form
+    setManualEndDate(false);
   }, [budget, currency]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -89,6 +100,12 @@ export default function BudgetFormSheet({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
+    
+    // Set manualEndDate flag when endDate is changed manually
+    if (name === 'endDate') {
+      setManualEndDate(true);
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -102,29 +119,37 @@ export default function BudgetFormSheet({
     }));
   };
 
-  // Auto-calculate end date based on period and start date
+  // Auto-calculate end date based on period and start date only if not manually changed
   useEffect(() => {
-    const startDate = new Date(formData.startDate);
-    let endDate = new Date(startDate);
+    // Only auto-calculate if end date hasn't been manually changed
+    if (!manualEndDate) {
+      const startDate = new Date(formData.startDate);
+      let endDate = new Date(startDate);
 
-    switch (formData.period) {
-      case 'weekly':
-        endDate.setDate(startDate.getDate() + 6);
-        break;
-      case 'monthly':
-        endDate.setMonth(startDate.getMonth() + 1);
-        endDate.setDate(0); // Last day of the month
-        break;
-      case 'yearly':
-        endDate.setFullYear(startDate.getFullYear() + 1);
-        endDate.setDate(startDate.getDate() - 1); // Day before next year
-        break;
+      switch (formData.period) {
+        case 'weekly':
+          endDate.setDate(startDate.getDate() + 6);
+          break;
+        case 'monthly':
+          endDate.setMonth(startDate.getMonth() + 1);
+          endDate.setDate(0); // Last day of the month
+          break;
+        case 'yearly':
+          endDate.setFullYear(startDate.getFullYear() + 1);
+          endDate.setDate(startDate.getDate() - 1); // Day before next year
+          break;
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        endDate: endDate.toISOString().split('T')[0]
+      }));
     }
+  }, [formData.period, formData.startDate, manualEndDate]);
 
-    setFormData(prev => ({
-      ...prev,
-      endDate: endDate.toISOString().split('T')[0]
-    }));
+  // Reset manual flag when period or start date changes
+  useEffect(() => {
+    setManualEndDate(false);
   }, [formData.period, formData.startDate]);
 
   return (
@@ -137,6 +162,34 @@ export default function BudgetFormSheet({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right">
+              Name
+            </Label>
+            <Input
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              className="col-span-3"
+              placeholder="Budget name (e.g., Travel Fund)"
+            />
+          </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="description" className="text-right">
+              Description
+            </Label>
+            <Input
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              className="col-span-3"
+              placeholder="Optional description"
+            />
+          </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="categoryId" className="text-right">
               Category
             </Label>
@@ -145,14 +198,16 @@ export default function BudgetFormSheet({
               onValueChange={(value) => handleSelectChange('categoryId', value)}
             >
               <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder="Select category (optional)" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map(category => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
+                {categories
+                  .filter(cat => cat.type === 'expense') // Typically budgets are for expenses
+                  .map(category => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
@@ -163,7 +218,7 @@ export default function BudgetFormSheet({
             </Label>
             <div className="col-span-3 relative">
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                {currency}
+                {formData.currency}
               </span>
               <Input
                 id="amount"
@@ -222,8 +277,9 @@ export default function BudgetFormSheet({
               name="endDate"
               type="date"
               value={formData.endDate}
-              readOnly
-              className="col-span-3 bg-gray-100"
+              onChange={handleInputChange}
+              className="col-span-3"
+              required
             />
           </div>
 

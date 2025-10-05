@@ -62,20 +62,25 @@ export async function GET(request: NextRequest) {
     
     for (const budget of activeBudgets) {
       // Get total spending in this category during the period
+      // Build where conditions
+      const whereConditions = [
+        eq(transactions.userId, userId),
+        eq(transactions.type, 'expense'),
+        gte(transactions.date, new Date(startDate)),
+        lte(transactions.date, new Date(endDate))
+      ];
+      
+      // Only add category condition if categoryId exists
+      if (budget.categoryId) {
+        whereConditions.push(eq(transactions.categoryId, budget.categoryId));
+      }
+      
       const spendingResult = await db
         .select({
           totalSpending: sum(transactions.amount).mapWith(Number),
         })
         .from(transactions)
-        .where(
-          and(
-            eq(transactions.userId, userId),
-            eq(transactions.categoryId, budget.categoryId),
-            eq(transactions.type, 'expense'),
-            gte(transactions.date, startDate),
-            lte(transactions.date, endDate)
-          )
-        );
+        .where(and(...whereConditions));
       
       const totalSpending = spendingResult[0]?.totalSpending || 0;
       const budgetAmount = parseFloat(budget.budgetAmount);

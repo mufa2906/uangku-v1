@@ -9,11 +9,13 @@ import { z } from 'zod';
 // Validation schema for updating budgets
 const BudgetUpdateSchema = z.object({
   categoryId: z.string().uuid().optional(),
+  name: z.string().min(1).max(100).optional(),
+  description: z.string().optional(),
   amount: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Amount must be a valid number with up to 2 decimal places').optional(),
   currency: z.string().length(3).optional(),
   period: z.enum(['weekly', 'monthly', 'yearly']).optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
+  startDate: z.string().optional(), // Allow date strings (YYYY-MM-DD)
+  endDate: z.string().optional(), // Allow date strings (YYYY-MM-DD)
   isActive: z.boolean().optional(),
 });
 
@@ -84,7 +86,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       );
     }
 
-    const { categoryId, amount, currency, period, startDate, endDate, isActive } = parsedBody.data;
+    const { categoryId, name, description, amount, currency, period, startDate, endDate, isActive } = parsedBody.data;
 
     // If updating category, verify it belongs to the user
     if (categoryId) {
@@ -113,11 +115,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       .update(budgets)
       .set({
         categoryId: categoryId ?? existingBudget[0].categoryId,
+        name: name ?? existingBudget[0].name,
+        description: description ?? existingBudget[0].description,
         amount: amount ?? existingBudget[0].amount,
         currency: currency ?? existingBudget[0].currency,
         period: period ?? existingBudget[0].period,
-        startDate: startDate ? new Date(startDate).toISOString().split('T')[0] : existingBudget[0].startDate,
-        endDate: endDate ? new Date(endDate).toISOString().split('T')[0] : existingBudget[0].endDate,
+        startDate: startDate ?? existingBudget[0].startDate,
+        endDate: endDate ?? existingBudget[0].endDate,
         isActive: isActive !== undefined ? isActive : existingBudget[0].isActive,
       })
       .where(and(eq(budgets.id, id), eq(budgets.userId, userId)))
