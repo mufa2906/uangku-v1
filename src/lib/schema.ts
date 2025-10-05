@@ -30,14 +30,14 @@ export const budgets = pgTable("budgets", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: varchar("user_id").notNull(),
   categoryId: uuid("category_id")
-    .references(() => categories.id, { onDelete: "cascade" }), // Optional now
+    .references(() => categories.id, { onDelete: "cascade" }), // Optional category reference
   name: varchar("name", { length: 100 }), // For custom budget names
   description: text("description"), // For budget descriptions
-  amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
-  currency: varchar("currency", { length: 3 }).notNull().default('IDR'),
-  period: budgetPeriod("period").notNull(),
-  startDate: date("start_date").notNull(),
-  endDate: date("end_date").notNull(),
+  amount: numeric("amount", { precision: 14, scale: 2 }).notNull(), // Budget amount
+  currency: varchar("currency", { length: 3 }).notNull().default('IDR'), // Currency code
+  period: budgetPeriod("period").notNull(), // Budget period
+  startDate: date("start_date").notNull(), // Start date of budget period
+  endDate: date("end_date").notNull(), // End date of budget period
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });

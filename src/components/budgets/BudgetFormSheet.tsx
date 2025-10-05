@@ -84,8 +84,10 @@ export default function BudgetFormSheet({
     setIsSubmitting(true);
 
     try {
+      // Filter out empty categoryId
       const submitData = {
         ...formData,
+        categoryId: formData.categoryId || null, // Convert empty string to null
         amount: formData.amount,
       };
 
