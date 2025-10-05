@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 // Validation schema for creating/updating budgets
 const BudgetSchema = z.object({
-  categoryId: z.string().uuid().optional(),
+  categoryId: z.string().uuid().nullable().optional(),
   name: z.string().min(1).max(100).optional(),
   description: z.string().optional(),
   amount: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Amount must be a valid number with up to 2 decimal places'),
