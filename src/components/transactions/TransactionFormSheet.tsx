@@ -16,7 +16,7 @@ import { useUser } from '@clerk/nextjs';
 import { Transaction, Category } from '@/types';
 
 // Type for transaction data when submitting to the API
-type TransactionSubmitData = Omit<Transaction, 'id' | 'userId' | 'createdAt' | 'categoryName'>;
+type TransactionSubmitData = Omit<Transaction, 'id' | 'userId' | 'createdAt' | 'categoryName' | 'budgetName'>;
 
 interface TransactionFormSheetProps {
   open: boolean;
@@ -36,6 +36,7 @@ export default function TransactionFormSheet({
   const { user } = useUser();
   const [formData, setFormData] = useState({
     categoryId: '',
+    budgetId: '', // Optional budget reference
     type: 'expense' as 'income' | 'expense',
     amount: '',
     note: '',
@@ -48,6 +49,7 @@ export default function TransactionFormSheet({
     if (transaction) {
       setFormData({
         categoryId: transaction.categoryId || '',
+        budgetId: transaction.budgetId || '', // Optional budget reference
         type: transaction.type,
         amount: parseFloat(transaction.amount).toString(),
         note: transaction.note || '',
@@ -57,6 +59,7 @@ export default function TransactionFormSheet({
       // Reset form for new transaction
       setFormData({
         categoryId: '',
+        budgetId: '', // Optional budget reference
         type: 'expense',
         amount: '',
         note: '',
@@ -70,8 +73,11 @@ export default function TransactionFormSheet({
     setIsSubmitting(true);
 
     try {
+      // Filter out empty budgetId - only include if it has a valid value
+      const { budgetId, ...rest } = formData;
       const submitData = {
-        ...formData,
+        ...rest,
+        budgetId: budgetId || null, // Convert empty string to null
         amount: formData.amount,
         date: new Date(formData.date).toISOString(),
       };

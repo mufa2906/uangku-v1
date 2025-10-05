@@ -19,6 +19,8 @@ export const transactions = pgTable("transactions", {
   categoryId: uuid("category_id")
     .notNull()
     .references(() => categories.id, { onDelete: "cascade" }),
+  budgetId: uuid("budget_id")
+    .references(() => budgets.id, { onDelete: "set null" }), // Optional reference to budget
   type: trxType("type").notNull(),
   amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
   note: text("note"),

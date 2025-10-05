@@ -11,6 +11,7 @@ export const TransactionSchema = z.object({
 
 export const CreateTransactionSchema = z.object({
   categoryId: z.string().uuid().optional().nullable(),
+  budgetId: z.string().uuid().optional().nullable(), // Optional budget reference
   type: z.enum(['income', 'expense']),
   amount: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Amount must be a valid number with up to 2 decimal places'),
   note: z.string().optional(),
@@ -19,6 +20,7 @@ export const CreateTransactionSchema = z.object({
 
 export const UpdateTransactionSchema = z.object({
   categoryId: z.string().uuid().optional().nullable(),
+  budgetId: z.string().uuid().optional().nullable(), // Optional budget reference
   type: z.enum(['income', 'expense']).optional(),
   amount: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Amount must be a valid number with up to 2 decimal places').optional(),
   note: z.string().optional().nullable(),

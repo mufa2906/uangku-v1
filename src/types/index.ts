@@ -5,6 +5,8 @@ export interface Transaction {
   userId: string;
   categoryId: string | null;
   categoryName: string | null;
+  budgetId: string | null; // Optional reference to budget
+  budgetName: string | null; // Budget name for display
   type: 'income' | 'expense';
   amount: string; // Using string to match the decimal type from the database
   note: string | null;

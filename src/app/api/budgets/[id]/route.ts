@@ -36,6 +36,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         userId: budgets.userId,
         categoryId: budgets.categoryId,
         categoryName: categories.name,
+        name: budgets.name, // Add budget name to the response
+        description: budgets.description, // Add budget description to the response
         amount: budgets.amount,
         currency: budgets.currency,
         period: budgets.period,
