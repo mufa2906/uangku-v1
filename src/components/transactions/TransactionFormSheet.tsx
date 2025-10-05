@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUser } from '@clerk/nextjs';
-import { Transaction, Category } from '@/types';
+import { Transaction, Category, Budget } from '@/types';
 
 // Type for transaction data when submitting to the API
 type TransactionSubmitData = Omit<Transaction, 'id' | 'userId' | 'createdAt' | 'categoryName' | 'budgetName'>;
@@ -24,6 +24,7 @@ interface TransactionFormSheetProps {
   onSubmit: (data: TransactionSubmitData) => void;
   transaction?: Transaction | null;
   categories: Category[];
+  budgets: Budget[]; // Add budgets prop
 }
 
 export default function TransactionFormSheet({ 
@@ -31,7 +32,8 @@ export default function TransactionFormSheet({
   onOpenChange, 
   onSubmit, 
   transaction,
-  categories 
+  categories,
+  budgets
 }: TransactionFormSheetProps) {
   const { user } = useUser();
   const [formData, setFormData] = useState({
@@ -147,6 +149,27 @@ export default function TransactionFormSheet({
               className="col-span-3"
               required
             />
+          </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="budgetId" className="text-right">
+              Budget
+            </Label>
+            <Select 
+              value={formData.budgetId || ''} 
+              onValueChange={(value) => handleSelectChange('budgetId', value)}
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select budget (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {budgets.map(budget => (
+                  <SelectItem key={budget.id} value={budget.id}>
+                    {budget.name || 'Unnamed Budget'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">

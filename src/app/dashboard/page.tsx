@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Transaction } from '@/types';
+import { Transaction, Budget } from '@/types';
 import WeeklyBarChart from '@/components/charts/WeeklyBar';
 import { FloatingButton } from '@/components/ui/floating-button';
 import { Plus } from 'lucide-react';
@@ -38,12 +38,14 @@ export default function DashboardPage() {
   const [insights, setInsights] = useState<InsightData | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]); // Add budgets state
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   useEffect(() => {
     if (userId) {
       fetchDashboardData();
+      fetchBudgets(); // Fetch budgets as well
     }
   }, [userId]);
 
@@ -71,6 +73,18 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+    }
+  };
+
+  const fetchBudgets = async () => {
+    try {
+      const response = await fetch('/api/budgets');
+      if (response.ok) {
+        const data = await response.json();
+        setBudgets(data);
+      }
+    } catch (error) {
+      console.error('Error fetching budgets:', error);
     }
   };
 
@@ -255,6 +269,7 @@ export default function DashboardPage() {
         onSubmit={handleSubmitTransaction}
         transaction={selectedTransaction}
         categories={categories}
+        budgets={budgets}
       />
 
       {/* Bottom Navigation */}

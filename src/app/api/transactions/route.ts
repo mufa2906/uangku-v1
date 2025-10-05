@@ -66,7 +66,6 @@ export async function GET(request: NextRequest) {
       .from(transactions)
       .leftJoin(categories, eq(transactions.categoryId, categories.id))
       .leftJoin(budgets, eq(transactions.budgetId, budgets.id)) // Join with budgets
-      .leftJoin(budgets, eq(transactions.budgetId, budgets.id)) // Join with budgets
       .where(whereCondition)
       .orderBy(orderCondition)
       .limit(limit)

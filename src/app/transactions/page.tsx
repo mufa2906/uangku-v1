@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Transaction, Category } from '@/types';
+import { Transaction, Category, Budget } from '@/types';
 import { FloatingButton } from '@/components/ui/floating-button';
 import { Plus, Search, Filter } from 'lucide-react';
 import TransactionFormSheet from '@/components/transactions/TransactionFormSheet';
@@ -16,6 +16,7 @@ export default function TransactionsPage() {
   const { formatCurrency } = useCurrency();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]); // Add budgets state
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,6 +26,7 @@ export default function TransactionsPage() {
   useEffect(() => {
     if (userId) {
       fetchTransactionsAndCategories();
+      fetchBudgets(); // Fetch budgets as well
     }
   }, [userId]);
 
@@ -49,6 +51,18 @@ export default function TransactionsPage() {
       console.error('Error fetching transactions and categories:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchBudgets = async () => {
+    try {
+      const response = await fetch('/api/budgets');
+      if (response.ok) {
+        const data = await response.json();
+        setBudgets(data);
+      }
+    } catch (error) {
+      console.error('Error fetching budgets:', error);
     }
   };
 
@@ -216,6 +230,7 @@ export default function TransactionsPage() {
         onSubmit={handleSubmitTransaction}
         transaction={selectedTransaction}
         categories={categories}
+        budgets={budgets}
       />
 
       {/* Bottom Navigation */}
