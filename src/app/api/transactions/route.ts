@@ -1,7 +1,7 @@
 // src/app/api/transactions/route.ts
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { transactions, categories } from '@/lib/schema';
+import { transactions, categories, budgets } from '@/lib/schema';
 import { auth } from '@clerk/nextjs/server';
 import { and, eq, desc, asc, count, gte, lte } from 'drizzle-orm';
 import { CreateTransactionSchema } from '@/lib/zod';
@@ -55,6 +55,8 @@ export async function GET(request: NextRequest) {
         userId: transactions.userId,
         categoryId: transactions.categoryId,
         categoryName: categories.name,
+        budgetId: transactions.budgetId,
+        budgetName: budgets.name, // Add budget name for display
         type: transactions.type,
         amount: transactions.amount,
         note: transactions.note,
@@ -63,6 +65,7 @@ export async function GET(request: NextRequest) {
       })
       .from(transactions)
       .leftJoin(categories, eq(transactions.categoryId, categories.id))
+      .leftJoin(budgets, eq(transactions.budgetId, budgets.id)) // Join with budgets
       .where(whereCondition)
       .orderBy(orderCondition)
       .limit(limit)
@@ -145,12 +148,16 @@ export async function POST(request: NextRequest) {
       return new Response('Category not found', { status: 404 });
     }
 
+    // Extract budgetId from validated data if present
+    const { budgetId } = validatedData as { budgetId?: string | null };
+
     // Create the transaction
     const newTransaction = await db
       .insert(transactions)
       .values({
         userId,
         categoryId: validCategoryId,
+        budgetId: budgetId || null, // Optional budget reference
         type,
         amount,
         note: note || null,

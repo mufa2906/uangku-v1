@@ -4,13 +4,14 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Transaction } from '@/types';
+import { Transaction, Budget } from '@/types';
 import WeeklyBarChart from '@/components/charts/WeeklyBar';
 import { FloatingButton } from '@/components/ui/floating-button';
-import { Plus } from 'lucide-react';
+import { Plus, AlertCircle } from 'lucide-react';
 import TransactionFormSheet from '@/components/transactions/TransactionFormSheet';
 import AppBottomNav from '@/components/shells/AppBottomNav';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import BudgetSummary from '@/components/budgets/BudgetSummary';
 
 interface WeeklyDataPoint {
   date: string;
@@ -37,12 +38,15 @@ export default function DashboardPage() {
   const [insights, setInsights] = useState<InsightData | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]); // Add budgets state
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   useEffect(() => {
     if (userId) {
       fetchDashboardData();
+      fetchBudgets(); // Fetch budgets as well
     }
   }, [userId]);
 
@@ -73,6 +77,18 @@ export default function DashboardPage() {
     }
   };
 
+  const fetchBudgets = async () => {
+    try {
+      const response = await fetch('/api/budgets');
+      if (response.ok) {
+        const data = await response.json();
+        setBudgets(data);
+      }
+    } catch (error) {
+      console.error('Error fetching budgets:', error);
+    }
+  };
+
   const handleAddTransaction = () => {
     setSelectedTransaction(null);
     setIsSheetOpen(true);
@@ -80,6 +96,8 @@ export default function DashboardPage() {
 
   const handleSubmitTransaction = async (data: any) => {
     try {
+      setError(null); // Clear any previous errors
+      
       let response;
       if (selectedTransaction) {
         // Update transaction
@@ -103,10 +121,25 @@ export default function DashboardPage() {
 
       if (response.ok) {
         await fetchDashboardData(); // Refresh data
+        await fetchBudgets(); // Refresh budgets as well
+        setIsSheetOpen(false);
       } else {
-        console.error('Error saving transaction:', await response.text());
+        const errorText = await response.text();
+        let errorMessage = 'Failed to save transaction';
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorData.message || errorText;
+        } catch (parseError) {
+          errorMessage = errorText;
+        }
+        
+        setError(`Error saving transaction: ${errorMessage}`);
+        console.error('Error saving transaction:', errorMessage);
       }
     } catch (error) {
+      const errorMessage = (error as Error).message || 'Network error occurred';
+      setError(`Error saving transaction: ${errorMessage}`);
       console.error('Error saving transaction:', error);
     }
   };
@@ -131,6 +164,15 @@ export default function DashboardPage() {
     <div className="pb-20"> {/* Space for bottom nav */}
       <div className="p-4 max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
+            <div className="flex items-center">
+              <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+              <p className="text-red-700">{error}</p>
+            </div>
+          </div>
+        )}
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -162,6 +204,11 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Budget Summary */}
+        <div className="mb-6">
+          <BudgetSummary />
         </div>
 
         {/* Weekly Trend Card */}
@@ -249,6 +296,7 @@ export default function DashboardPage() {
         onSubmit={handleSubmitTransaction}
         transaction={selectedTransaction}
         categories={categories}
+        budgets={budgets}
       />
 
       {/* Bottom Navigation */}

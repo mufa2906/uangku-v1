@@ -5,7 +5,7 @@ A personal finance tracking application that helps users manage their finances w
 
 ## Feature Priority & Timeline
 
-### Phase 1: Core Functionality (Current)
+### Phase 1: Core Functionality (Completed)
 - ✅ User authentication with Clerk
 - ✅ Transaction CRUD operations
 - ✅ Category management
@@ -14,7 +14,7 @@ A personal finance tracking application that helps users manage their finances w
 
 ### Phase 2: Essential Features
 - ✅ Currency support (IDR-focused, with regional currencies)
-- 🗓️ Budgeting tools (50/30/20, zero-based, envelope method)
+- ✅ Budgeting tools (50/30/20, zero-based, envelope method)
 - 🗓️ Account switching (if needed after logout improvement)
 
 ### Phase 3: Advanced Features

@@ -4,9 +4,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Transaction, Category } from '@/types';
+import { Transaction, Category, Budget } from '@/types';
 import { FloatingButton } from '@/components/ui/floating-button';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search, Filter, AlertCircle } from 'lucide-react';
 import TransactionFormSheet from '@/components/transactions/TransactionFormSheet';
 import AppBottomNav from '@/components/shells/AppBottomNav';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -16,15 +16,18 @@ export default function TransactionsPage() {
   const { formatCurrency } = useCurrency();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]); // Add budgets state
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (userId) {
       fetchTransactionsAndCategories();
+      fetchBudgets(); // Fetch budgets as well
     }
   }, [userId]);
 
@@ -49,6 +52,18 @@ export default function TransactionsPage() {
       console.error('Error fetching transactions and categories:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchBudgets = async () => {
+    try {
+      const response = await fetch('/api/budgets');
+      if (response.ok) {
+        const data = await response.json();
+        setBudgets(data);
+      }
+    } catch (error) {
+      console.error('Error fetching budgets:', error);
     }
   };
 
@@ -82,6 +97,8 @@ export default function TransactionsPage() {
 
   const handleSubmitTransaction = async (data: any) => {
     try {
+      setError(null); // Clear any previous errors
+      
       let response;
       if (selectedTransaction) {
         // Update transaction
@@ -105,11 +122,17 @@ export default function TransactionsPage() {
 
       if (response.ok) {
         await fetchTransactionsAndCategories(); // Refresh data
+        await fetchBudgets(); // Refresh budgets as well
         setIsSheetOpen(false);
       } else {
-        console.error('Error saving transaction:', await response.text());
+        const errorData = await response.json();
+        const errorMessage = errorData.error || errorData.message || 'Failed to save transaction';
+        setError(`Error saving transaction: ${errorMessage}`);
+        console.error('Error saving transaction:', errorMessage);
       }
     } catch (error) {
+      const errorMessage = (error as Error).message || 'Network error occurred';
+      setError(`Error saving transaction: ${errorMessage}`);
       console.error('Error saving transaction:', error);
     }
   };
@@ -150,6 +173,15 @@ export default function TransactionsPage() {
             </select>
           </div>
         </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
+            <div className="flex items-center">
+              <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+              <p className="text-red-700">{error}</p>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="text-center py-10 text-gray-500">Loading transactions...</div>
@@ -216,6 +248,7 @@ export default function TransactionsPage() {
         onSubmit={handleSubmitTransaction}
         transaction={selectedTransaction}
         categories={categories}
+        budgets={budgets}
       />
 
       {/* Bottom Navigation */}

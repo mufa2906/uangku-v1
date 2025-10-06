@@ -3,7 +3,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Home, Plus, FileText, Folder, User, Settings } from 'lucide-react';
+import { Home, Plus, FileText, Folder, User, Settings, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function AppBottomNav() {
@@ -24,6 +24,11 @@ export default function AppBottomNav() {
       name: 'Categories',
       href: '/categories',
       icon: Folder,
+    },
+    {
+      name: 'Budgets',
+      href: '/budgets',
+      icon: Calendar,
     },
     {
       name: 'Profile',

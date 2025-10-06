@@ -13,10 +13,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUser } from '@clerk/nextjs';
-import { Transaction, Category } from '@/types';
+import { Transaction, Category, Budget } from '@/types';
 
 // Type for transaction data when submitting to the API
-type TransactionSubmitData = Omit<Transaction, 'id' | 'userId' | 'createdAt' | 'categoryName'>;
+type TransactionSubmitData = Omit<Transaction, 'id' | 'userId' | 'createdAt' | 'categoryName' | 'budgetName'>;
 
 interface TransactionFormSheetProps {
   open: boolean;
@@ -24,6 +24,7 @@ interface TransactionFormSheetProps {
   onSubmit: (data: TransactionSubmitData) => void;
   transaction?: Transaction | null;
   categories: Category[];
+  budgets: Budget[]; // Add budgets prop
 }
 
 export default function TransactionFormSheet({ 
@@ -31,11 +32,13 @@ export default function TransactionFormSheet({
   onOpenChange, 
   onSubmit, 
   transaction,
-  categories 
+  categories,
+  budgets
 }: TransactionFormSheetProps) {
   const { user } = useUser();
   const [formData, setFormData] = useState({
     categoryId: '',
+    budgetId: '', // Optional budget reference
     type: 'expense' as 'income' | 'expense',
     amount: '',
     note: '',
@@ -48,6 +51,7 @@ export default function TransactionFormSheet({
     if (transaction) {
       setFormData({
         categoryId: transaction.categoryId || '',
+        budgetId: transaction.budgetId || '', // Optional budget reference
         type: transaction.type,
         amount: parseFloat(transaction.amount).toString(),
         note: transaction.note || '',
@@ -57,6 +61,7 @@ export default function TransactionFormSheet({
       // Reset form for new transaction
       setFormData({
         categoryId: '',
+        budgetId: '', // Optional budget reference
         type: 'expense',
         amount: '',
         note: '',
@@ -70,8 +75,11 @@ export default function TransactionFormSheet({
     setIsSubmitting(true);
 
     try {
+      // Filter out empty budgetId - only include if it has a valid value
+      const { budgetId, ...rest } = formData;
       const submitData = {
-        ...formData,
+        ...rest,
+        budgetId: budgetId || null, // Convert empty string to null
         amount: formData.amount,
         date: new Date(formData.date).toISOString(),
       };
@@ -141,6 +149,27 @@ export default function TransactionFormSheet({
               className="col-span-3"
               required
             />
+          </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="budgetId" className="text-right">
+              Budget
+            </Label>
+            <Select 
+              value={formData.budgetId || ''} 
+              onValueChange={(value) => handleSelectChange('budgetId', value)}
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select budget (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {budgets.map(budget => (
+                  <SelectItem key={budget.id} value={budget.id}>
+                    {budget.name || 'Unnamed Budget'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
