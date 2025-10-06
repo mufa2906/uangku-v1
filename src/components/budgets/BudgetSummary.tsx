@@ -38,48 +38,30 @@ export default function BudgetSummary() {
     try {
       setLoading(true);
       
-      // For now, we'll simulate the data since we don't have the real API endpoint yet
-      // In a real implementation, this would fetch from /api/budgets/summary
-      const mockData: BudgetSummaryItem[] = [
-        {
-          id: '1',
-          categoryId: '1',
-          categoryName: 'Food & Dining',
-          categoryType: 'expense',
-          budgetAmount: 1500000,
-          spentAmount: 950000,
-          currency: 'IDR',
-          period: 'monthly',
-          percentageUsed: 63.3,
-          remainingAmount: 550000,
-        },
-        {
-          id: '2',
-          categoryId: '2',
-          categoryName: 'Transportation',
-          categoryType: 'expense',
-          budgetAmount: 800000,
-          spentAmount: 750000,
-          currency: 'IDR',
-          period: 'monthly',
-          percentageUsed: 93.8,
-          remainingAmount: 50000,
-        },
-        {
-          id: '3',
-          categoryId: '3',
-          categoryName: 'Entertainment',
-          categoryType: 'expense',
-          budgetAmount: 500000,
-          spentAmount: 300000,
-          currency: 'IDR',
-          period: 'monthly',
-          percentageUsed: 60.0,
-          remainingAmount: 200000,
-        },
-      ];
+      // Fetch actual budget summaries from the API
+      const response = await fetch('/api/budgets/summary');
       
-      setBudgetSummaries(mockData);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch budget summaries: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      // Map the API response to the expected format for the UI
+      const budgetData = data.map((item: any) => ({
+        id: item.budgetId,
+        categoryId: item.categoryId,
+        categoryName: item.categoryName || item.name, // For custom budgets, use name if categoryName is null
+        categoryType: item.categoryType,
+        budgetAmount: item.budgetAmount,
+        spentAmount: item.totalSpending,
+        currency: item.currency,
+        period: item.period,
+        percentageUsed: item.percentageUsed,
+        remainingAmount: item.remaining,
+      }));
+      
+      setBudgetSummaries(budgetData);
     } catch (err) {
       console.error('Error fetching budget summaries:', err);
       setError('Failed to load budget summaries');

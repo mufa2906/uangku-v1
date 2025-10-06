@@ -3,6 +3,7 @@ import { pgTable, varchar, timestamp, text, uuid, numeric, pgEnum, date, boolean
 
 export const trxType = pgEnum("trx_type", ["income", "expense"]);
 export const budgetPeriod = pgEnum("budget_period", ["weekly", "monthly", "yearly"]);
+export const walletType = pgEnum("wallet_type", ["cash", "bank", "credit_card", "e_wallet", "savings"]);
 
 export const categories = pgTable("categories", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -16,6 +17,9 @@ export const categories = pgTable("categories", {
 export const transactions = pgTable("transactions", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: varchar("user_id").notNull(),
+  walletId: uuid("wallet_id")
+    .notNull()
+    .references(() => wallets.id, { onDelete: "cascade" }), // Reference to wallet
   categoryId: uuid("category_id")
     .notNull()
     .references(() => categories.id, { onDelete: "cascade" }),
@@ -25,6 +29,17 @@ export const transactions = pgTable("transactions", {
   amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
   note: text("note"),
   date: timestamp("date", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export const wallets = pgTable("wallets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").notNull(),
+  name: varchar("name", { length: 100 }).notNull(), // e.g., "Cash", "BCA Account", "Credit Card"
+  type: walletType("type").notNull(), // cash, bank, credit_card, e_wallet, savings
+  balance: numeric("balance", { precision: 14, scale: 2 }).notNull().default('0'), // Current balance
+  currency: varchar("currency", { length: 3 }).notNull().default('IDR'), // Currency of this wallet
+  isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 

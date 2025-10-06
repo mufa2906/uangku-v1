@@ -2,6 +2,7 @@
 import { z } from 'zod';
 
 export const TransactionSchema = z.object({
+  walletId: z.string().uuid(),
   categoryId: z.string().uuid(),
   type: z.enum(['income', 'expense']),
   amount: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Amount must be a valid number with up to 2 decimal places'),
@@ -10,6 +11,7 @@ export const TransactionSchema = z.object({
 });
 
 export const CreateTransactionSchema = z.object({
+  walletId: z.string().uuid({ message: "Wallet ID must be a valid UUID" }),
   categoryId: z.string().uuid().optional().nullable(),
   budgetId: z.string().uuid().optional().nullable(), // Optional budget reference
   type: z.enum(['income', 'expense']),
@@ -19,6 +21,7 @@ export const CreateTransactionSchema = z.object({
 });
 
 export const UpdateTransactionSchema = z.object({
+  walletId: z.string().uuid({ message: "Wallet ID must be a valid UUID" }).optional(),
   categoryId: z.string().uuid().optional().nullable(),
   budgetId: z.string().uuid().optional().nullable(), // Optional budget reference
   type: z.enum(['income', 'expense']).optional(),
@@ -43,4 +46,20 @@ export const UpdateCategorySchema = z.object({
   name: z.string().optional().nullable(),
   icon: z.string().optional().nullable(),
   type: z.enum(['income', 'expense']).optional(),
+});
+
+// Wallet schemas
+export const CreateWalletSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
+  type: z.enum(['cash', 'bank', 'credit_card', 'e_wallet', 'savings']),
+  currency: z.string().length(3).default('IDR'),
+  balance: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Balance must be a valid number with up to 2 decimal places').optional().default('0'),
+});
+
+export const UpdateWalletSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters').optional(),
+  type: z.enum(['cash', 'bank', 'credit_card', 'e_wallet', 'savings']).optional(),
+  currency: z.string().length(3).optional(),
+  balance: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Balance must be a valid number with up to 2 decimal places').optional(),
+  isActive: z.boolean().optional(),
 });

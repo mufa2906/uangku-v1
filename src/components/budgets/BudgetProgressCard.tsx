@@ -9,7 +9,13 @@ import { Budget } from '@/types';
 import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface BudgetProgressCardProps {
-  budget: Budget & { categoryName: string; categoryType: string };
+  budget: Budget & { 
+    categoryName: string; 
+    categoryType: string;
+    spentAmount?: number;
+    remainingAmount?: number;
+    percentageUsed?: number;
+  };
   onEdit: (budget: Budget) => void;
   onDelete: (budgetId: string) => void;
 }
@@ -21,11 +27,11 @@ export default function BudgetProgressCard({
 }: BudgetProgressCardProps) {
   const { formatCurrency } = useCurrency();
   
-  // In a real implementation, this would come from the API
-  // For now we'll simulate with sample data
-  const spentAmount = 0; // Would be calculated from transactions
-  const remainingAmount = parseFloat(budget.amount) - spentAmount;
-  const percentageUsed = spentAmount > 0 ? (spentAmount / parseFloat(budget.amount)) * 100 : 0;
+  // Use actual values if provided, otherwise calculate from budget amount
+  const spentAmount = budget.spentAmount || 0;
+  const remainingAmount = budget.remainingAmount || parseFloat(budget.amount) - spentAmount;
+  const percentageUsed = budget.percentageUsed || (spentAmount > 0 ? (spentAmount / parseFloat(budget.amount)) * 100 : 0);
+  const remainingPercentage = Math.max(0, 100 - percentageUsed);
   
   const getStatusColor = (percentage: number) => {
     if (percentage >= 90) return 'text-red-600';
@@ -96,12 +102,21 @@ export default function BudgetProgressCard({
             </span>
           </div>
           
-          <Progress value={percentageUsed} className="w-full" />
+          <Progress 
+            value={remainingPercentage} 
+            className={`w-full ${
+              percentageUsed >= 90 
+                ? 'bg-red-200 [&>div]:bg-red-500' 
+                : percentageUsed >= 75 
+                  ? 'bg-yellow-200 [&>div]:bg-yellow-500' 
+                  : '[&>div]:bg-green-500'
+            }`} 
+          />
           
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">0%</span>
             <span className={`font-medium ${getStatusColor(percentageUsed)}`}>
-              {percentageUsed.toFixed(0)}%
+              {remainingPercentage.toFixed(0)}% remaining
             </span>
             <span className="text-gray-500">100%</span>
           </div>

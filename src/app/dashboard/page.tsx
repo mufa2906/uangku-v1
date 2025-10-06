@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Transaction, Budget } from '@/types';
+import { Transaction, Budget, Wallet } from '@/types';
 import WeeklyBarChart from '@/components/charts/WeeklyBar';
 import { FloatingButton } from '@/components/ui/floating-button';
 import { Plus, AlertCircle } from 'lucide-react';
@@ -39,6 +39,7 @@ export default function DashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]); // Add budgets state
+  const [wallets, setWallets] = useState<Wallet[]>([]); // Add wallets state
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -47,6 +48,7 @@ export default function DashboardPage() {
     if (userId) {
       fetchDashboardData();
       fetchBudgets(); // Fetch budgets as well
+      fetchWallets(); // Fetch wallets as well
     }
   }, [userId]);
 
@@ -89,6 +91,24 @@ export default function DashboardPage() {
     }
   };
 
+  const fetchWallets = async () => {
+    try {
+      const response = await fetch('/api/wallets');
+      if (response.ok) {
+        const data = await response.json();
+        setWallets(data);
+      }
+    } catch (error) {
+      console.error('Error fetching wallets:', error);
+    }
+  };
+
+  const getTotalWalletBalance = () => {
+    return wallets.reduce((total, wallet) => {
+      return total + parseFloat(wallet.balance || '0');
+    }, 0);
+  };
+
   const handleAddTransaction = () => {
     setSelectedTransaction(null);
     setIsSheetOpen(true);
@@ -122,6 +142,7 @@ export default function DashboardPage() {
       if (response.ok) {
         await fetchDashboardData(); // Refresh data
         await fetchBudgets(); // Refresh budgets as well
+        await fetchWallets(); // Refresh wallets as well
         setIsSheetOpen(false);
       } else {
         const errorText = await response.text();
@@ -205,6 +226,21 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Wallet Balance Card */}
+        <Card className="mb-6">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-blue-600">Total Balance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              {formatCurrency(getTotalWalletBalance())}
+            </div>
+            <p className="text-sm text-gray-500 mt-1">
+              Across {wallets.length} {wallets.length === 1 ? 'wallet' : 'wallets'}
+            </p>
+          </CardContent>
+        </Card>
 
         {/* Budget Summary */}
         <div className="mb-6">
@@ -297,6 +333,7 @@ export default function DashboardPage() {
         transaction={selectedTransaction}
         categories={categories}
         budgets={budgets}
+        wallets={wallets}
       />
 
       {/* Bottom Navigation */}

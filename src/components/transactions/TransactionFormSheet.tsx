@@ -13,10 +13,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUser } from '@clerk/nextjs';
-import { Transaction, Category, Budget } from '@/types';
+import { Transaction, Category, Budget, Wallet } from '@/types';
 
 // Type for transaction data when submitting to the API
-type TransactionSubmitData = Omit<Transaction, 'id' | 'userId' | 'createdAt' | 'categoryName' | 'budgetName'>;
+type TransactionSubmitData = Omit<Transaction, 'id' | 'userId' | 'createdAt' | 'categoryName' | 'budgetName' | 'walletName'>;
 
 interface TransactionFormSheetProps {
   open: boolean;
@@ -25,6 +25,7 @@ interface TransactionFormSheetProps {
   transaction?: Transaction | null;
   categories: Category[];
   budgets: Budget[]; // Add budgets prop
+  wallets: Wallet[]; // Add wallets prop
 }
 
 export default function TransactionFormSheet({ 
@@ -33,10 +34,12 @@ export default function TransactionFormSheet({
   onSubmit, 
   transaction,
   categories,
-  budgets
+  budgets,
+  wallets
 }: TransactionFormSheetProps) {
   const { user } = useUser();
   const [formData, setFormData] = useState({
+    walletId: '',
     categoryId: '',
     budgetId: '', // Optional budget reference
     type: 'expense' as 'income' | 'expense',
@@ -50,6 +53,7 @@ export default function TransactionFormSheet({
   useEffect(() => {
     if (transaction) {
       setFormData({
+        walletId: transaction.walletId || '',
         categoryId: transaction.categoryId || '',
         budgetId: transaction.budgetId || '', // Optional budget reference
         type: transaction.type,
@@ -60,6 +64,7 @@ export default function TransactionFormSheet({
     } else {
       // Reset form for new transaction
       setFormData({
+        walletId: '',
         categoryId: '',
         budgetId: '', // Optional budget reference
         type: 'expense',
@@ -131,6 +136,27 @@ export default function TransactionFormSheet({
               <SelectContent>
                 <SelectItem value="income">Income</SelectItem>
                 <SelectItem value="expense">Expense</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="walletId" className="text-right">
+              Wallet
+            </Label>
+            <Select 
+              value={formData.walletId} 
+              onValueChange={(value) => handleSelectChange('walletId', value)}
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select wallet" />
+              </SelectTrigger>
+              <SelectContent>
+                {wallets.map(wallet => (
+                  <SelectItem key={wallet.id} value={wallet.id}>
+                    {wallet.name} ({wallet.type})
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

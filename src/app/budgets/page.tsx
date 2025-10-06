@@ -10,10 +10,17 @@ import { FloatingButton } from '@/components/ui/floating-button';
 import AppBottomNav from '@/components/shells/AppBottomNav';
 import { Budget, Category } from '@/types';
 import BudgetFormSheet from '@/components/budgets/BudgetFormSheet';
+import { Progress } from '@/components/ui/progress';
 
 interface BudgetWithCategory extends Budget {
   categoryName: string | null;
   categoryType: string | null;
+}
+
+interface BudgetSummary extends BudgetWithCategory {
+  spentAmount: number;
+  remainingAmount: number;
+  percentageUsed: number;
 }
 
 export default function BudgetsPage() {
@@ -50,9 +57,33 @@ export default function BudgetsPage() {
         const errorText = await budgetsResponse.text();
         throw new Error(`Failed to fetch budgets: ${errorText || budgetsResponse.statusText}`);
       }
-      const budgetsData = await budgetsResponse.json();
+      const budgetsData: BudgetWithCategory[] = await budgetsResponse.json();
       
-      setBudgets(budgetsData);
+      // Fetch budget summaries to get spending information
+      const summaryResponse = await fetch('/api/budgets/summary');
+      if (!summaryResponse.ok) {
+        console.error('Failed to fetch budget summaries, continuing with just budget data');
+        // Continue with just the budget data, without spending info
+        setBudgets(budgetsData);
+      } else {
+        // Merge budget data with summary data
+        const summaryData = await summaryResponse.json();
+        
+        // Create budget summaries with spending info
+        const budgetSummaries = budgetsData.map(budget => {
+          // Find matching summary data
+          const summary = summaryData.find((s: any) => s.budgetId === budget.id);
+          
+          return {
+            ...budget,
+            spentAmount: summary?.totalSpending || 0,
+            remainingAmount: summary?.remaining || parseFloat(budget.amount),
+            percentageUsed: summary?.percentageUsed || 0
+          };
+        });
+        
+        setBudgets(budgetSummaries);
+      }
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(`Failed to load data: ${(err as Error).message}. Please try again.`);
@@ -136,6 +167,10 @@ export default function BudgetsPage() {
       style: 'currency',
       currency: currency || 'IDR',
     }).format(amount);
+  };
+
+  const getRemainingPercentage = (percentageUsed: number) => {
+    return Math.max(0, 100 - percentageUsed); // Ensure it doesn't go below 0
   };
 
   if (loading) {
@@ -235,17 +270,28 @@ export default function BudgetsPage() {
                     </div>
                   </div>
                   
-                  {/* Progress bar would go here in future implementation */}
+                  {/* Progress bar with remaining percentage (100% to 0%) */}
                   <div className="mt-4">
                     <div className="flex justify-between text-sm mb-1">
-                      <span>Progress</span>
-                      <span>0%</span>
+                      <span>Spent: {formatCurrency(budget.spentAmount || 0, budget.currency)}</span>
+                      <span>Remaining: {formatCurrency(budget.remainingAmount || parseFloat(budget.amount), budget.currency)}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full" 
-                        style={{ width: '0%' }}
-                      ></div>
+                      <Progress 
+                        value={getRemainingPercentage(budget.percentageUsed || 0)} 
+                        className={`h-2 ${
+                          (budget.percentageUsed || 0) >= 90 
+                            ? 'bg-red-200 [&>div]:bg-red-500' 
+                            : (budget.percentageUsed || 0) >= 75 
+                              ? 'bg-yellow-200 [&>div]:bg-yellow-500' 
+                              : '[&>div]:bg-green-500'
+                        }`}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>0%</span>
+                      <span>{getRemainingPercentage(budget.percentageUsed || 0).toFixed(0)}% remaining</span>
+                      <span>100%</span>
                     </div>
                   </div>
                 </CardContent>

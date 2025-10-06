@@ -1,10 +1,10 @@
 // src/app/api/transactions/route.ts
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { transactions, categories, budgets } from '@/lib/schema';
+import { transactions, categories, budgets, wallets } from '@/lib/schema';
 import { auth } from '@clerk/nextjs/server';
-import { and, eq, desc, asc, count, gte, lte } from 'drizzle-orm';
-import { CreateTransactionSchema } from '@/lib/zod';
+import { and, eq, desc, asc, count, gte, lte, sql } from 'drizzle-orm';
+import { CreateTransactionSchema, UpdateTransactionSchema } from '@/lib/zod';
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
     const typeParam = request.nextUrl.searchParams.get('type');
     const type = typeParam && (typeParam === 'income' || typeParam === 'expense') ? typeParam : undefined;
     const categoryId = request.nextUrl.searchParams.get('categoryId') || undefined;
+    const walletId = request.nextUrl.searchParams.get('walletId') || undefined;
     const startDate = request.nextUrl.searchParams.get('startDate') || undefined;
     const endDate = request.nextUrl.searchParams.get('endDate') || undefined;
 
@@ -35,6 +36,7 @@ export async function GET(request: NextRequest) {
       eq(transactions.userId, userId),
       type ? eq(transactions.type, type) : undefined,
       categoryId ? eq(transactions.categoryId, categoryId) : undefined,
+      walletId ? eq(transactions.walletId, walletId) : undefined,
       startDate ? gte(transactions.date, new Date(startDate)) : undefined,
       endDate ? lte(transactions.date, new Date(endDate)) : undefined,
     ].filter(Boolean) as any[];
@@ -53,6 +55,8 @@ export async function GET(request: NextRequest) {
       .select({
         id: transactions.id,
         userId: transactions.userId,
+        walletId: transactions.walletId,
+        walletName: wallets.name, // Include wallet name
         categoryId: transactions.categoryId,
         categoryName: categories.name,
         budgetId: transactions.budgetId,
@@ -64,6 +68,7 @@ export async function GET(request: NextRequest) {
         createdAt: transactions.createdAt,
       })
       .from(transactions)
+      .leftJoin(wallets, eq(transactions.walletId, wallets.id)) // Join with wallets
       .leftJoin(categories, eq(transactions.categoryId, categories.id))
       .leftJoin(budgets, eq(transactions.budgetId, budgets.id)) // Join with budgets
       .where(whereCondition)
@@ -119,13 +124,24 @@ export async function POST(request: NextRequest) {
     }
 
     const validatedData = parsedBody.data as {
+      walletId: string;
       categoryId?: string | null;
       type: 'income' | 'expense';
       amount: string;
       note?: string | null;
       date: string;
     };
-    const { categoryId, type, amount, note, date } = validatedData;
+    const { walletId, categoryId, type, amount, note, date } = validatedData;
+
+    // Verify that the wallet belongs to the user
+    const userWallet = await db
+      .select()
+      .from(wallets)
+      .where(and(eq(wallets.id, walletId), eq(wallets.userId, userId)));
+
+    if (userWallet.length === 0) {
+      return new Response('Wallet not found', { status: 404 });
+    }
 
     // If no category ID is provided, we'll create a default category
     let validCategoryId = categoryId;
@@ -152,10 +168,11 @@ export async function POST(request: NextRequest) {
     const { budgetId } = validatedData as { budgetId?: string | null };
 
     // Create the transaction
-    const newTransaction = await db
+    const [newTransaction] = await db
       .insert(transactions)
       .values({
         userId,
+        walletId, // Add wallet reference
         categoryId: validCategoryId,
         budgetId: budgetId || null, // Optional budget reference
         type,
@@ -165,7 +182,27 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    return new Response(JSON.stringify(newTransaction[0]), {
+    // Update wallet balance based on transaction type
+    const transactionAmount = parseFloat(amount);
+    if (type === 'income') {
+      // For income, add to wallet balance
+      await db
+        .update(wallets)
+        .set({
+          balance: sql`${wallets.balance} + ${transactionAmount}`,
+        })
+        .where(eq(wallets.id, walletId));
+    } else if (type === 'expense') {
+      // For expense, subtract from wallet balance
+      await db
+        .update(wallets)
+        .set({
+          balance: sql`${wallets.balance} - ${transactionAmount}`,
+        })
+        .where(eq(wallets.id, walletId));
+    }
+
+    return new Response(JSON.stringify(newTransaction), {
       status: 201,
       headers: { 'Content-Type': 'application/json' },
     });

@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Transaction, Category, Budget } from '@/types';
+import { Transaction, Category, Budget, Wallet } from '@/types';
 import { FloatingButton } from '@/components/ui/floating-button';
 import { Plus, Search, Filter, AlertCircle } from 'lucide-react';
 import TransactionFormSheet from '@/components/transactions/TransactionFormSheet';
@@ -17,6 +17,7 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]); // Add budgets state
+  const [wallets, setWallets] = useState<Wallet[]>([]); // Add wallets state
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,6 +29,7 @@ export default function TransactionsPage() {
     if (userId) {
       fetchTransactionsAndCategories();
       fetchBudgets(); // Fetch budgets as well
+      fetchWallets(); // Fetch wallets as well
     }
   }, [userId]);
 
@@ -35,8 +37,8 @@ export default function TransactionsPage() {
     try {
       setLoading(true);
       
-      // Fetch transactions
-      const transactionsRes = await fetch('/api/transactions');
+      // Fetch transactions with explicit sorting (by date descending)
+      const transactionsRes = await fetch('/api/transactions?sortBy=date&sortOrder=desc');
       if (transactionsRes.ok) {
         const { transactions: fetchedTransactions } = await transactionsRes.json();
         setTransactions(fetchedTransactions);
@@ -64,6 +66,18 @@ export default function TransactionsPage() {
       }
     } catch (error) {
       console.error('Error fetching budgets:', error);
+    }
+  };
+
+  const fetchWallets = async () => {
+    try {
+      const response = await fetch('/api/wallets');
+      if (response.ok) {
+        const data = await response.json();
+        setWallets(data);
+      }
+    } catch (error) {
+      console.error('Error fetching wallets:', error);
     }
   };
 
@@ -138,13 +152,15 @@ export default function TransactionsPage() {
   };
 
   // Filter transactions based on search term and type
-  const filteredTransactions = transactions.filter(transaction => {
-    const matchesSearch = transaction.note?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          transaction.categoryName?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === 'all' || transaction.type === filterType;
-    
-    return matchesSearch && matchesType;
-  });
+  const filteredTransactions = transactions
+    .filter(transaction => {
+      const matchesSearch = transaction.note?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            transaction.categoryName?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesType = filterType === 'all' || transaction.type === filterType;
+      
+      return matchesSearch && matchesType;
+    })
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Ensure sorting by date descending
 
   return (
     <div className="pb-20"> {/* Space for bottom nav */}
@@ -202,6 +218,11 @@ export default function TransactionsPage() {
                       <div className="font-medium">
                         {transaction.categoryName || 'Uncategorized'}
                       </div>
+                      {transaction.walletName && (
+                        <div className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full inline-block mt-1">
+                          {transaction.walletName}
+                        </div>
+                      )}
                       <div className="text-sm text-gray-500">
                         {transaction.note || 'No note'}
                       </div>
@@ -209,6 +230,11 @@ export default function TransactionsPage() {
                         {new Date(transaction.date).toLocaleDateString()}
                       </div>
                     </div>
+                    {transaction.budgetName && (
+                      <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                        {transaction.budgetName}
+                      </div>
+                    )}
                     <div className="text-right">
                       <div className={`font-medium text-lg ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
                         {transaction.type === 'income' ? '+' : '-'}{formatCurrency(parseFloat(transaction.amount))}
@@ -249,6 +275,7 @@ export default function TransactionsPage() {
         transaction={selectedTransaction}
         categories={categories}
         budgets={budgets}
+        wallets={wallets}
       />
 
       {/* Bottom Navigation */}

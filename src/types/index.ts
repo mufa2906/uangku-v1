@@ -3,6 +3,8 @@
 export interface Transaction {
   id: string;
   userId: string;
+  walletId: string;
+  walletName: string | null;
   categoryId: string | null;
   categoryName: string | null;
   budgetId: string | null; // Optional reference to budget
@@ -11,6 +13,17 @@ export interface Transaction {
   amount: string; // Using string to match the decimal type from the database
   note: string | null;
   date: string; // ISO string format
+  createdAt: string; // ISO string format
+}
+
+export interface Wallet {
+  id: string;
+  userId: string;
+  name: string;
+  type: 'cash' | 'bank' | 'credit_card' | 'e_wallet' | 'savings';
+  balance: string; // Using string to match the decimal type from the database
+  currency: string;
+  isActive: boolean;
   createdAt: string; // ISO string format
 }
 

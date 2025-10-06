@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     const budgetSummaries = [];
     
     for (const budget of activeBudgets) {
-      // Get total spending in this category during the period
+      // Get total spending for this budget during the period
       // Build where conditions
       const whereConditions = [
         eq(transactions.userId, userId),
@@ -70,9 +70,15 @@ export async function GET(request: NextRequest) {
         lte(transactions.date, new Date(endDate))
       ];
       
-      // Only add category condition if categoryId exists
+      // Add condition based on budget type:
+      // For category-linked budgets: transactions matching the category
+      // For custom budgets: transactions directly linked to the budget
       if (budget.categoryId) {
+        // Category-linked budget: include transactions in that category
         whereConditions.push(eq(transactions.categoryId, budget.categoryId));
+      } else {
+        // Custom budget: include transactions directly linked to this budget
+        whereConditions.push(eq(transactions.budgetId, budget.id));
       }
       
       const spendingResult = await db
