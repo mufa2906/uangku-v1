@@ -158,13 +158,19 @@ export async function PUT(
         .where(eq(wallets.id, oldTransaction.walletId));
     }
 
-    // Update the transaction
+    // Update the transaction, handling nullable fields properly
+    const updateData: any = {};
+    if (validatedData.walletId) updateData.walletId = validatedData.walletId;
+    if (validatedData.categoryId !== undefined) updateData.categoryId = validatedData.categoryId; // Can be null
+    if (validatedData.budgetId !== undefined) updateData.budgetId = validatedData.budgetId; // Can be null
+    if (validatedData.type) updateData.type = validatedData.type;
+    if (validatedData.amount) updateData.amount = validatedData.amount;
+    if (validatedData.note !== undefined) updateData.note = validatedData.note; // Can be null
+    if (validatedData.date) updateData.date = new Date(validatedData.date);
+
     const [updatedTransaction] = await db
       .update(transactions)
-      .set({
-        ...validatedData,
-        date: validatedData.date ? new Date(validatedData.date) : undefined,
-      })
+      .set(updateData)
       .where(and(eq(transactions.id, id), eq(transactions.userId, userId)))
       .returning();
 

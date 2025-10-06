@@ -17,7 +17,21 @@ interface BudgetWithCategory extends Budget {
   categoryType: string | null;
 }
 
-interface BudgetSummary extends BudgetWithCategory {
+interface BudgetSummary {
+  id: string;
+  userId: string;
+  categoryId: string | null;
+  name: string | null;
+  description: string | null;
+  amount: string;
+  currency: string;
+  period: 'weekly' | 'monthly' | 'yearly';
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  createdAt: string;
+  categoryName: string | null;
+  categoryType: string | null;
   spentAmount: number;
   remainingAmount: number;
   percentageUsed: number;
@@ -25,7 +39,7 @@ interface BudgetSummary extends BudgetWithCategory {
 
 export default function BudgetsPage() {
   const { userId } = useAuth();
-  const [budgets, setBudgets] = useState<BudgetWithCategory[]>([]);
+  const [budgets, setBudgets] = useState<BudgetSummary[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,19 +77,29 @@ export default function BudgetsPage() {
       const summaryResponse = await fetch('/api/budgets/summary');
       if (!summaryResponse.ok) {
         console.error('Failed to fetch budget summaries, continuing with just budget data');
-        // Continue with just the budget data, without spending info
-        setBudgets(budgetsData);
+        // Continue with just the budget data, without spending info, but convert to BudgetSummary format
+        const basicBudgetSummaries: BudgetSummary[] = budgetsData.map(budget => ({
+          ...budget,
+          categoryName: budget.categoryName || null,
+          categoryType: budget.categoryType || null,
+          spentAmount: 0,
+          remainingAmount: parseFloat(budget.amount),
+          percentageUsed: 0
+        }));
+        setBudgets(basicBudgetSummaries);
       } else {
         // Merge budget data with summary data
         const summaryData = await summaryResponse.json();
         
         // Create budget summaries with spending info
-        const budgetSummaries = budgetsData.map(budget => {
+        const budgetSummaries: BudgetSummary[] = budgetsData.map(budget => {
           // Find matching summary data
           const summary = summaryData.find((s: any) => s.budgetId === budget.id);
           
           return {
             ...budget,
+            categoryName: budget.categoryName || null,
+            categoryType: budget.categoryType || null,
             spentAmount: summary?.totalSpending || 0,
             remainingAmount: summary?.remaining || parseFloat(budget.amount),
             percentageUsed: summary?.percentageUsed || 0

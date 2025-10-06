@@ -16,14 +16,14 @@ import {
   DialogFooter
 } from '@/components/ui/dialog';
 import { 
-  FloatingButton,
   Plus,
   Edit,
   Trash2,
   Wallet as WalletIcon,
   AlertCircle,
   CheckCircle
-} from '@/components/ui/icons';
+} from 'lucide-react';
+import { FloatingButton } from '@/components/ui/floating-button';
 import AppBottomNav from '@/components/shells/AppBottomNav';
 import { Wallet } from '@/types';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -259,7 +259,7 @@ export default function WalletsPage() {
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="text-2xl font-bold text-green-600">
-                        {formatCurrency(parseFloat(wallet.balance || '0'), wallet.currency)}
+                        {formatCurrency(parseFloat(wallet.balance || '0'))}
                       </p>
                       <p className="text-sm text-gray-500">
                         Balance
