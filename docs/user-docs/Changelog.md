@@ -1,5 +1,27 @@
 # Uangku - Changelog
 
+## v1.2.0 - Goals & Enhanced User Experience (October 2025)
+
+### Added
+- **Financial Goal Tracking**: Create, manage, and track progress toward specific financial goals
+- **Goal Status Management**: Goals can be active, paused, completed, or cancelled
+- **Target Amounts & Dates**: Set specific targets and deadlines for your financial objectives
+- **Goal-to-Wallet Linking**: Connect goals to specific wallets for automated tracking
+- **Export Functionality**: Export transactions to various formats for external analysis
+- **Toast Notifications**: Real-time user feedback for actions and system messages
+- **Improved Transaction Workflow**: Enhanced wallet/budget selection with automatic association
+- **Goal Management Page**: Dedicated UI for creating and managing financial goals
+
+### Changed
+- **Navigation Structure**: Replaced 'Profile' with 'Goals' in bottom navigation
+- **Transaction Form Logic**: Improved wallet-budget association with auto-clearing and messaging
+- **User Feedback System**: Implemented toast notifications for better UX
+- **Schema Definition**: Added goals table with status tracking and target management
+- **Validation Schemas**: Added Zod schemas for goal creation and updates
+- **Type Definitions**: Added Goal interface with all required properties
+
+---
+
 ## v1.1.0 - Wallet-Centric Finance Management (October 2025)
 
 ### Added

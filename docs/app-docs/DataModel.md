@@ -50,12 +50,28 @@
 - `isActive` (boolean, default: true) - Whether budget is active
 - `createdAt` (timestamp) - Creation time
 
+### Goals
+- `id` (UUID, primary key) - Unique goal identifier
+- `userId` (string) - References user (Clerk userId)
+- `name` (varchar) - Goal name (e.g., "Emergency Fund", "New Car")
+- `description` (text, optional) - Goal description
+- `targetAmount` (numeric(14,2)) - Target amount for the goal
+- `currentAmount` (numeric(14,2), default: '0') - Current progress toward the goal
+- `currency` (string, default: 'IDR') - Currency code
+- `targetDate` (date, optional) - Target completion date
+- `status` (enum: active | paused | completed | cancelled, default: 'active') - Goal status
+- `walletId` (UUID, optional) - References wallet for automatic contributions
+- `isActive` (boolean, default: true) - Whether goal is active
+- `createdAt` (timestamp) - Creation time
+
 ## Relationships
 - 1 User → N Wallets
 - 1 User → N Categories
 - 1 User → N Transactions
 - 1 User → N Budgets
+- 1 User → N Goals
 - 1 Wallet → N Transactions
+- 1 Wallet → N Goals (optional association for automatic contributions)
 - 1 Category → N Transactions
 - 1 Category → N Budgets (category-linked budgets)
 - 1 Budget → N Transactions (for custom budgets)

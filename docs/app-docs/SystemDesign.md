@@ -39,6 +39,13 @@ Client ⇄ Next.js (Route Handlers) ⇄ Drizzle ORM (pg) ⇄ Supabase Postgres
 - **categories** table: id, userId, name, icon, type (income/expense)
 - Scoped to individual users only
 
+### 5. Goals System
+- **goals** table: id, userId, name, description, targetAmount, currentAmount, currency, targetDate, status (active, paused, completed, cancelled), walletId (optional), isActive
+- Supports financial goal tracking with progress monitoring
+- Goal-to-wallet association for automatic contributions
+- Status management for goal lifecycle (active, paused, completed, cancelled)
+- API routes for goal CRUD operations
+
 ## Security & Access Control
 - User validation via Clerk `auth()` in every API handler
 - All queries bound to `userId` for multi-tenant isolation
@@ -56,6 +63,7 @@ Client ⇄ Next.js (Route Handlers) ⇄ Drizzle ORM (pg) ⇄ Supabase Postgres
 │ ├─ wallets/            # Wallet management
 │ ├─ budgets/            # Budget management
 │ ├─ categories/         # Category management
+│ ├─ goals/              # Goal management
 │ ├─ api/                # API route handlers
 │ ├─ layout.tsx          # Main layout
 │ └─ providers.tsx       # Context providers
@@ -65,7 +73,10 @@ Client ⇄ Next.js (Route Handlers) ⇄ Drizzle ORM (pg) ⇄ Supabase Postgres
 │ ├─ shells/             # Layout shells (bottom nav)
 │ ├─ transactions/       # Transaction-specific components
 │ ├─ wallets/            # Wallet-specific components
-│ └─ budgets/            # Budget-specific components
+│ ├─ budgets/            # Budget-specific components
+│ ├─ goals/              # Goal-specific components
+│ ├─ export/             # Export functionality components
+│ └─ ui/                 # Additional shadcn/ui components (textarea, toast)
 ├─ lib/                  # Libraries and utilities
 │ ├─ db.ts               # Database connection and Drizzle instance
 │ ├─ auth.ts             # Clerk helpers

@@ -27,16 +27,30 @@
 - **Progress visualization**: Clear progress bars showing budget usage
 - **Period options**: Weekly, monthly, or yearly budget periods
 
+### 🎯 Financial Goal Tracking
+- **Goal creation**: Set specific financial goals like "Emergency Fund" or "New Car"
+- **Progress tracking**: Monitor current amount vs. target amount
+- **Status management**: Goals can be active, paused, completed, or cancelled
+- **Target dates**: Set completion deadlines for your financial objectives
+- **Linked wallets**: Connect goals to specific wallets for automated contributions
+- **Goal overview**: Visual dashboard showing progress toward all financial goals
+
 ### 📈 Intelligent Insights
 - **Weekly trend analysis**: Track spending patterns over time
 - **Visual charts**: Easy-to-understand bar charts showing income vs expense
 - **Spending summaries**: Quick overview of your financial health
 - **Balance tracking**: Real-time total balance across all wallets
+- **Data export**: Export your transactions to various formats for external analysis
 
 ### 🔐 Secure & Private
 - **Industry-standard authentication**: Powered by Clerk for secure login
 - **Personal data protection**: Your financial data stays private and secure
 - **No sharing**: We don't share your data with third parties
+
+### 💬 Enhanced User Experience
+- **Toast notifications**: Real-time feedback for user actions
+- **Intuitive workflows**: Streamlined transaction management with smart defaults
+- **Automatic budget/wallet management**: Smart system prevents invalid associations
 
 ## Why Choose Uangku?
 
