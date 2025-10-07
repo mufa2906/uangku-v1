@@ -28,7 +28,7 @@
 ## Core Components
 
 ### Navigation
-- **Bottom Navigation**: 5 primary tabs (Dashboard, Transactions, Wallets, Budgets, Goals)
+- **Bottom Navigation**: 6 primary tabs (Dashboard, Transactions, Wallets, Budgets, Goals, Profile)
 - **Floating Action Button**: Always visible for quick transaction entry
 - **Progressive Disclosure**: Minimal info upfront, more detail on demand
 

@@ -70,6 +70,12 @@
 - **Progress tracking**: Visual indicators to keep you motivated
 - **Goal-focused**: Move money toward what matters most to you
 
+### 👤 User Profile & Management
+- **Account information**: View your profile details and account creation date
+- **Currency settings**: Manage your preferred currency display
+- **Secure logout**: Easy and secure sign-out functionality
+- **Account management**: Access to settings and preferences
+
 ### 🎨 Beautiful & Intuitive
 - **Clean design**: Uncluttered interface that reduces decision fatigue
 - **Visual feedback**: Clear indicators for budget status (green/yellow/red)

@@ -13,7 +13,7 @@
 - **Goal Management Page**: Dedicated UI for creating and managing financial goals
 
 ### Changed
-- **Navigation Structure**: Replaced 'Profile' with 'Goals' in bottom navigation
+- **Navigation Structure**: Added 'Goals' section and restored 'Profile' in bottom navigation
 - **Transaction Form Logic**: Improved wallet-budget association with auto-clearing and messaging
 - **User Feedback System**: Implemented toast notifications for better UX
 - **Schema Definition**: Added goals table with status tracking and target management

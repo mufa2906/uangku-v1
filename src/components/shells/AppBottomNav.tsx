@@ -26,11 +26,6 @@ export default function AppBottomNav() {
       icon: Wallet,
     },
     {
-      name: 'Categories',
-      href: '/categories',
-      icon: Folder,
-    },
-    {
       name: 'Budgets',
       href: '/budgets',
       icon: Calendar,
@@ -39,6 +34,11 @@ export default function AppBottomNav() {
       name: 'Goals',
       href: '/goals',
       icon: Target,
+    },
+    {
+      name: 'Profile',
+      href: '/profile',
+      icon: User,
     },
   ];
 
