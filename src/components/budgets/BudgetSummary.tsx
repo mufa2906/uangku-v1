@@ -10,15 +10,16 @@ import { AlertCircle, CheckCircle, AlertTriangle } from 'lucide-react';
 
 interface BudgetSummaryItem {
   id: string;
+  walletId: string;
   categoryId: string;
   categoryName: string;
   categoryType: string;
-  budgetAmount: number;
+  allocatedAmount: string;
+  remainingAmount: string;
   spentAmount: number;
   currency: string;
   period: string;
   percentageUsed: number;
-  remainingAmount: number;
 }
 
 export default function BudgetSummary() {
@@ -50,15 +51,16 @@ export default function BudgetSummary() {
       // Map the API response to the expected format for the UI
       const budgetData = data.map((item: any) => ({
         id: item.budgetId,
+        walletId: item.walletId,
         categoryId: item.categoryId,
         categoryName: item.categoryName || item.name, // For custom budgets, use name if categoryName is null
         categoryType: item.categoryType,
-        budgetAmount: item.budgetAmount,
+        allocatedAmount: item.allocatedAmount,
         spentAmount: item.totalSpending,
+        remainingAmount: item.remainingAmount,
         currency: item.currency,
         period: item.period,
         percentageUsed: item.percentageUsed,
-        remainingAmount: item.remaining,
       }));
       
       setBudgetSummaries(budgetData);
@@ -151,7 +153,7 @@ export default function BudgetSummary() {
                     <span className="ml-2 font-medium">{budget.categoryName}</span>
                   </div>
                   <span className="text-sm font-medium">
-                    {formatCurrency(budget.spentAmount)} / {formatCurrency(budget.budgetAmount)}
+                    {formatCurrency(budget.spentAmount)} / {formatCurrency(parseFloat(budget.allocatedAmount))}
                   </span>
                 </div>
                 
@@ -168,7 +170,7 @@ export default function BudgetSummary() {
                 
                 <div className="flex justify-between text-xs text-gray-500">
                   <span>{budget.percentageUsed.toFixed(0)}% used</span>
-                  <span>{formatCurrency(budget.remainingAmount)} remaining</span>
+                  <span>{formatCurrency(parseFloat(budget.remainingAmount))} remaining</span>
                 </div>
               </div>
             );

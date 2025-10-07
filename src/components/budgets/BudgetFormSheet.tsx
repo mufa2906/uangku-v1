@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Category, Budget } from '@/types';
+import { Category, Budget, Wallet } from '@/types';
 import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface BudgetFormSheetProps {
@@ -21,6 +21,7 @@ interface BudgetFormSheetProps {
   onSubmit: (data: Partial<Budget>) => void;
   budget?: Budget | null;
   categories: Category[];
+  wallets: Wallet[]; // Add wallets prop
 }
 
 export default function BudgetFormSheet({
@@ -29,13 +30,15 @@ export default function BudgetFormSheet({
   onSubmit,
   budget,
   categories,
+  wallets,
 }: BudgetFormSheetProps) {
   const { currency } = useCurrency();
   const [formData, setFormData] = useState({
+    walletId: '',
     categoryId: '',
     name: '',
     description: '',
-    amount: '',
+    allocatedAmount: '',
     currency: currency,
     period: 'monthly' as 'weekly' | 'monthly' | 'yearly',
     startDate: new Date().toISOString().split('T')[0],
@@ -49,10 +52,11 @@ export default function BudgetFormSheet({
   useEffect(() => {
     if (budget) {
       setFormData({
+        walletId: budget.walletId,
         categoryId: budget.categoryId || '',
         name: budget.name || '',
         description: budget.description || '',
-        amount: parseFloat(budget.amount).toString(),
+        allocatedAmount: parseFloat(budget.allocatedAmount).toString(),
         currency: budget.currency,
         period: budget.period,
         startDate: budget.startDate.split('T')[0],
@@ -64,10 +68,11 @@ export default function BudgetFormSheet({
       const today = new Date();
       const endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0); // Last day of current month
       setFormData({
+        walletId: '',
         categoryId: '',
         name: '',
         description: '',
-        amount: '',
+        allocatedAmount: '',
         currency: currency,
         period: 'monthly',
         startDate: today.toISOString().split('T')[0],
@@ -85,11 +90,11 @@ export default function BudgetFormSheet({
 
     try {
       // Filter out empty categoryId - only include if it has a valid value
-      const { categoryId, ...rest } = formData;
+      const { categoryId, allocatedAmount, ...rest } = formData;
       const submitData = {
         ...rest,
         ...(categoryId && categoryId !== '' ? { categoryId } : {}), // Only include categoryId if it has a non-empty value
-        amount: formData.amount,
+        allocatedAmount: allocatedAmount,
       };
 
       await onSubmit(submitData);
@@ -179,6 +184,27 @@ export default function BudgetFormSheet({
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="walletId" className="text-right">
+              Source Wallet
+            </Label>
+            <Select 
+              value={formData.walletId} 
+              onValueChange={(value) => handleSelectChange('walletId', value)}
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select source wallet" />
+              </SelectTrigger>
+              <SelectContent>
+                {wallets.map(wallet => (
+                  <SelectItem key={wallet.id} value={wallet.id}>
+                    {wallet.name} ({wallet.type}) - {wallet.balance}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="description" className="text-right">
               Description
             </Label>
@@ -216,19 +242,19 @@ export default function BudgetFormSheet({
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="amount" className="text-right">
-              Amount
+            <Label htmlFor="allocatedAmount" className="text-right">
+              Allocated Amount
             </Label>
             <div className="col-span-3 relative">
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
                 {formData.currency}
               </span>
               <Input
-                id="amount"
-                name="amount"
+                id="allocatedAmount"
+                name="allocatedAmount"
                 type="number"
                 step="0.01"
-                value={formData.amount}
+                value={formData.allocatedAmount}
                 onChange={handleInputChange}
                 className="pl-12"
                 placeholder="0.00"

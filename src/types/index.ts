@@ -39,10 +39,12 @@ export interface Category {
 export interface Budget {
   id: string;
   userId: string;
+  walletId: string; // Source wallet for this budget
   categoryId: string | null;
   name: string | null;
   description: string | null;
-  amount: string;
+  allocatedAmount: string; // Amount allocated to this budget
+  remainingAmount: string; // Amount remaining in this budget
   currency: string;
   period: 'weekly' | 'monthly' | 'yearly';
   startDate: string; // ISO date format

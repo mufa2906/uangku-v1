@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Calendar, AlertCircle, Edit, Trash2 } from 'lucide-react';
 import { FloatingButton } from '@/components/ui/floating-button';
 import AppBottomNav from '@/components/shells/AppBottomNav';
-import { Budget, Category } from '@/types';
+import { Budget, Category, Wallet } from '@/types';
 import BudgetFormSheet from '@/components/budgets/BudgetFormSheet';
 import { Progress } from '@/components/ui/progress';
 
@@ -20,10 +20,12 @@ interface BudgetWithCategory extends Budget {
 interface BudgetSummary {
   id: string;
   userId: string;
+  walletId: string;
   categoryId: string | null;
   name: string | null;
   description: string | null;
-  amount: string;
+  allocatedAmount: string;
+  remainingAmount: string;
   currency: string;
   period: 'weekly' | 'monthly' | 'yearly';
   startDate: string;
@@ -33,7 +35,6 @@ interface BudgetSummary {
   categoryName: string | null;
   categoryType: string | null;
   spentAmount: number;
-  remainingAmount: number;
   percentageUsed: number;
 }
 
@@ -41,6 +42,7 @@ export default function BudgetsPage() {
   const { userId } = useAuth();
   const [budgets, setBudgets] = useState<BudgetSummary[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [wallets, setWallets] = useState<Wallet[]>([]); // Add wallets state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -49,6 +51,7 @@ export default function BudgetsPage() {
   useEffect(() => {
     if (userId) {
       fetchBudgetsAndCategories();
+      fetchWallets(); // Fetch wallets as well
     }
   }, [userId]);
 
@@ -79,11 +82,23 @@ export default function BudgetsPage() {
         console.error('Failed to fetch budget summaries, continuing with just budget data');
         // Continue with just the budget data, without spending info, but convert to BudgetSummary format
         const basicBudgetSummaries: BudgetSummary[] = budgetsData.map(budget => ({
-          ...budget,
+          id: budget.id,
+          userId: budget.userId,
+          walletId: budget.walletId,
+          categoryId: budget.categoryId,
+          name: budget.name,
+          description: budget.description,
+          allocatedAmount: budget.allocatedAmount,
+          remainingAmount: budget.remainingAmount,
+          currency: budget.currency,
+          period: budget.period,
+          startDate: budget.startDate,
+          endDate: budget.endDate,
+          isActive: budget.isActive,
+          createdAt: budget.createdAt,
           categoryName: budget.categoryName || null,
           categoryType: budget.categoryType || null,
-          spentAmount: 0,
-          remainingAmount: parseFloat(budget.amount),
+          spentAmount: parseFloat(budget.allocatedAmount) - parseFloat(budget.remainingAmount),
           percentageUsed: 0
         }));
         setBudgets(basicBudgetSummaries);
@@ -97,11 +112,23 @@ export default function BudgetsPage() {
           const summary = summaryData.find((s: any) => s.budgetId === budget.id);
           
           return {
-            ...budget,
+            id: budget.id,
+            userId: budget.userId,
+            walletId: budget.walletId,
+            categoryId: budget.categoryId,
+            name: budget.name,
+            description: budget.description,
+            allocatedAmount: budget.allocatedAmount,
+            remainingAmount: summary?.remainingAmount?.toString() || budget.remainingAmount,
+            currency: budget.currency,
+            period: budget.period,
+            startDate: budget.startDate,
+            endDate: budget.endDate,
+            isActive: budget.isActive,
+            createdAt: budget.createdAt,
             categoryName: budget.categoryName || null,
             categoryType: budget.categoryType || null,
-            spentAmount: summary?.totalSpending || 0,
-            remainingAmount: summary?.remaining || parseFloat(budget.amount),
+            spentAmount: summary?.spentAmount || (parseFloat(budget.allocatedAmount) - parseFloat(budget.remainingAmount)),
             percentageUsed: summary?.percentageUsed || 0
           };
         });
@@ -113,6 +140,18 @@ export default function BudgetsPage() {
       setError(`Failed to load data: ${(err as Error).message}. Please try again.`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchWallets = async () => {
+    try {
+      const response = await fetch('/api/wallets');
+      if (response.ok) {
+        const data = await response.json();
+        setWallets(data);
+      }
+    } catch (error) {
+      console.error('Error fetching wallets:', error);
     }
   };
 
@@ -277,7 +316,7 @@ export default function BudgetsPage() {
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="text-2xl font-bold">
-                        {formatCurrency(parseFloat(budget.amount), budget.currency)}
+                        {formatCurrency(parseFloat(budget.allocatedAmount), budget.currency)}
                       </p>
                       <p className="text-sm text-gray-500">
                         {new Date(budget.startDate).toLocaleDateString()} to {new Date(budget.endDate).toLocaleDateString()}
@@ -298,7 +337,7 @@ export default function BudgetsPage() {
                   <div className="mt-4">
                     <div className="flex justify-between text-sm mb-1">
                       <span>Spent: {formatCurrency(budget.spentAmount || 0, budget.currency)}</span>
-                      <span>Remaining: {formatCurrency(budget.remainingAmount || parseFloat(budget.amount), budget.currency)}</span>
+                      <span>Remaining: {formatCurrency(parseFloat(budget.remainingAmount) || parseFloat(budget.allocatedAmount), budget.currency)}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <Progress 
@@ -332,6 +371,7 @@ export default function BudgetsPage() {
         onSubmit={handleSubmitBudget}
         budget={editingBudget}
         categories={categories}
+        wallets={wallets}
       />
 
       {/* Floating Action Button */}

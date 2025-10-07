@@ -1,23 +1,10 @@
 // src/app/api/budgets/route.ts
 import { NextRequest } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import { budgets, categories } from '@/lib/schema';
-import { and, eq, desc, gte, lte } from 'drizzle-orm';
-import { z } from 'zod';
-
-// Validation schema for creating/updating budgets
-const BudgetSchema = z.object({
-  categoryId: z.string().uuid().nullable().optional(),
-  name: z.string().min(1).max(100).optional(),
-  description: z.string().optional(),
-  amount: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Amount must be a valid number with up to 2 decimal places'),
-  currency: z.string().length(3).optional(),
-  period: z.enum(['weekly', 'monthly', 'yearly']),
-  startDate: z.string(), // Allow date strings (YYYY-MM-DD)
-  endDate: z.string(), // Allow date strings (YYYY-MM-DD)
-  isActive: z.boolean().optional(),
-});
+import { budgets, wallets, categories } from '@/lib/schema';
+import { auth } from '@clerk/nextjs/server';
+import { and, eq } from 'drizzle-orm';
+import { CreateBudgetSchema, UpdateBudgetSchema } from '@/lib/zod';
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,34 +14,29 @@ export async function GET(request: NextRequest) {
       return new Response('Unauthorized', { status: 401 });
     }
 
-    // Get query parameters
-    const { searchParams } = new URL(request.url);
-    const period = searchParams.get('period');
-    const categoryId = searchParams.get('categoryId');
+    // Get query parameters for filtering
+    const includeInactive = request.nextUrl.searchParams.get('includeInactive') === 'true';
 
     // Build the where conditions
-    let whereConditions = [eq(budgets.userId, userId)];
-    
-    if (period) {
-      whereConditions.push(eq(budgets.period, period as "weekly" | "monthly" | "yearly"));
-    }
-    
-    if (categoryId) {
-      whereConditions.push(eq(budgets.categoryId, categoryId));
-    }
+    const filters = [
+      eq(budgets.userId, userId),
+      includeInactive ? undefined : eq(budgets.isActive, true),
+    ].filter(Boolean) as any[];
 
-    const whereCondition = and(...whereConditions);
+    const whereCondition = filters.length > 1 ? and(...filters) : filters[0];
 
-    // Fetch budgets
     const budgetsResult = await db
       .select({
         id: budgets.id,
         userId: budgets.userId,
+        walletId: budgets.walletId,
+        walletName: wallets.name, // Include wallet name
         categoryId: budgets.categoryId,
-        categoryName: categories.name,
-        name: budgets.name, // Add budget name to the response
-        description: budgets.description, // Add budget description to the response
-        amount: budgets.amount,
+        categoryName: categories.name, // Include category name if linked
+        name: budgets.name,
+        description: budgets.description,
+        allocatedAmount: budgets.allocatedAmount,
+        remainingAmount: budgets.remainingAmount,
         currency: budgets.currency,
         period: budgets.period,
         startDate: budgets.startDate,
@@ -63,9 +45,9 @@ export async function GET(request: NextRequest) {
         createdAt: budgets.createdAt,
       })
       .from(budgets)
+      .leftJoin(wallets, eq(budgets.walletId, wallets.id))
       .leftJoin(categories, eq(budgets.categoryId, categories.id))
-      .where(whereCondition)
-      .orderBy(desc(budgets.createdAt));
+      .where(whereCondition);
 
     return new Response(
       JSON.stringify(budgetsResult),
@@ -91,7 +73,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Validate the request body
-    const parsedBody = BudgetSchema.safeParse(body);
+    const parsedBody = CreateBudgetSchema.safeParse(body);
     if (!parsedBody.success) {
       return new Response(
         JSON.stringify({ error: 'Invalid request body', details: parsedBody.error.flatten() }),
@@ -99,38 +81,59 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { categoryId, name, description, amount, currency, period, startDate, endDate, isActive } = parsedBody.data;
+    const validatedData = parsedBody.data;
+    const { walletId, allocatedAmount, startDate, endDate, ...rest } = validatedData;
+    
+    // Verify that the wallet belongs to the user
+    const userWallet = await db
+      .select({
+        id: wallets.id,
+        balance: wallets.balance
+      })
+      .from(wallets)
+      .where(and(eq(wallets.id, walletId), eq(wallets.userId, userId)));
 
-    // Verify that the category belongs to the user (if categoryId is provided)
-    if (categoryId) {
-      const userCategory = await db
-        .select()
-        .from(categories)
-        .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)));
+    if (userWallet.length === 0) {
+      return new Response('Wallet not found', { status: 404 });
+    }
 
-      if (userCategory.length === 0) {
-        return new Response('Category not found or does not belong to user', { status: 404 });
-      }
+    // Check if allocated amount exceeds wallet balance
+    const walletBalance = parseFloat(userWallet[0].balance);
+    const allocatedAmountNum = parseFloat(allocatedAmount);
+    
+    if (allocatedAmountNum > walletBalance) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Insufficient funds', 
+          message: `Cannot allocate ${allocatedAmount} from wallet with balance ${userWallet[0].balance}`
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
     // Create the budget
-    const newBudget = await db
+    const [newBudget] = await db
       .insert(budgets)
       .values({
-        userId,
-        categoryId: categoryId || null,
-        name: name || null,
-        description: description || null,
-        amount,
-        currency: currency || 'IDR',
-        period,
-        startDate: startDate, // Already in YYYY-MM-DD format
-        endDate: endDate, // Already in YYYY-MM-DD format
-        isActive: isActive !== undefined ? isActive : true,
-      })
+        userId: userId as any,
+        walletId: walletId as any,
+        allocatedAmount: allocatedAmount as any,
+        remainingAmount: allocatedAmount as any, // Initially, remaining equals allocated
+        startDate: new Date(startDate).toISOString().split('T')[0] as any,
+        endDate: new Date(endDate).toISOString().split('T')[0] as any,
+        ...rest,
+      } as any)
       .returning();
 
-    return new Response(JSON.stringify(newBudget[0]), {
+    // Deduct the allocated amount from the wallet balance
+    await db
+      .update(wallets)
+      .set({
+        balance: (walletBalance - allocatedAmountNum).toString(),
+      })
+      .where(eq(wallets.id, walletId));
+
+    return new Response(JSON.stringify(newBudget), {
       status: 201,
       headers: { 'Content-Type': 'application/json' },
     });

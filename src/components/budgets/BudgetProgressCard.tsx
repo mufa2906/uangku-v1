@@ -29,8 +29,8 @@ export default function BudgetProgressCard({
   
   // Use actual values if provided, otherwise calculate from budget amount
   const spentAmount = budget.spentAmount || 0;
-  const remainingAmount = budget.remainingAmount || parseFloat(budget.amount) - spentAmount;
-  const percentageUsed = budget.percentageUsed || (spentAmount > 0 ? (spentAmount / parseFloat(budget.amount)) * 100 : 0);
+  const remainingAmount = budget.remainingAmount || parseFloat(budget.allocatedAmount) - spentAmount;
+  const percentageUsed = budget.percentageUsed || (spentAmount > 0 ? (spentAmount / parseFloat(budget.allocatedAmount)) * 100 : 0);
   const remainingPercentage = Math.max(0, 100 - percentageUsed);
   
   const getStatusColor = (percentage: number) => {
@@ -75,7 +75,7 @@ export default function BudgetProgressCard({
         <div className="flex justify-between items-center mb-4">
           <div>
             <p className="text-2xl font-bold">
-              {formatCurrency(parseFloat(budget.amount))}
+              {formatCurrency(parseFloat(budget.allocatedAmount))}
             </p>
             <p className="text-sm text-gray-500">
               {new Date(budget.startDate).toLocaleDateString()} to {new Date(budget.endDate).toLocaleDateString()}

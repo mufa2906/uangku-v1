@@ -183,7 +183,19 @@ export default function TransactionFormSheet({
             </Label>
             <Select 
               value={formData.budgetId || ''} 
-              onValueChange={(value) => handleSelectChange('budgetId', value)}
+              onValueChange={(value) => {
+                handleSelectChange('budgetId', value);
+                // When changing budget, automatically select the related wallet
+                if (value) {
+                  const selectedBudget = budgets.find(b => b.id === value);
+                  if (selectedBudget) {
+                    setFormData(prev => ({
+                      ...prev,
+                      walletId: selectedBudget.walletId
+                    }));
+                  }
+                }
+              }}
             >
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select budget (optional)" />
@@ -191,7 +203,7 @@ export default function TransactionFormSheet({
               <SelectContent>
                 {budgets.map(budget => (
                   <SelectItem key={budget.id} value={budget.id}>
-                    {budget.name || 'Unnamed Budget'}
+                    {budget.name || 'Unnamed Budget'} ({wallets.find(w => w.id === budget.walletId)?.name || 'Unknown Wallet'})
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
     const type = typeParam && (typeParam === 'income' || typeParam === 'expense') ? typeParam : undefined;
     const categoryId = request.nextUrl.searchParams.get('categoryId') || undefined;
     const walletId = request.nextUrl.searchParams.get('walletId') || undefined;
+    const budgetId = request.nextUrl.searchParams.get('budgetId') || undefined;
     const startDate = request.nextUrl.searchParams.get('startDate') || undefined;
     const endDate = request.nextUrl.searchParams.get('endDate') || undefined;
 
@@ -37,6 +38,7 @@ export async function GET(request: NextRequest) {
       type ? eq(transactions.type, type) : undefined,
       categoryId ? eq(transactions.categoryId, categoryId) : undefined,
       walletId ? eq(transactions.walletId, walletId) : undefined,
+      budgetId ? eq(transactions.budgetId, budgetId) : undefined,
       startDate ? gte(transactions.date, new Date(startDate)) : undefined,
       endDate ? lte(transactions.date, new Date(endDate)) : undefined,
     ].filter(Boolean) as any[];
@@ -125,13 +127,14 @@ export async function POST(request: NextRequest) {
 
     const validatedData = parsedBody.data as {
       walletId: string;
+      budgetId?: string | null;
       categoryId?: string | null;
       type: 'income' | 'expense';
       amount: string;
       note?: string | null;
       date: string;
     };
-    const { walletId, categoryId, type, amount, note, date } = validatedData;
+    const { walletId, budgetId, categoryId, type, amount, note, date } = validatedData;
 
     // Verify that the wallet belongs to the user
     const userWallet = await db
@@ -164,17 +167,57 @@ export async function POST(request: NextRequest) {
       return new Response('Category not found', { status: 404 });
     }
 
-    // Extract budgetId from validated data if present
-    const { budgetId } = validatedData as { budgetId?: string | null };
+    // If a budgetId is provided, verify it exists and belongs to the user
+    let budgetData = null;
+    if (budgetId) {
+      budgetData = await db
+        .select({
+          id: budgets.id,
+          userId: budgets.userId,
+          walletId: budgets.walletId,
+          remainingAmount: budgets.remainingAmount,
+          allocatedAmount: budgets.allocatedAmount
+        })
+        .from(budgets)
+        .where(and(eq(budgets.id, budgetId), eq(budgets.userId, userId)));
+
+      if (budgetData.length === 0) {
+        return new Response('Budget not found', { status: 404 });
+      }
+
+      // Check if the budget is linked to the selected wallet
+      if (budgetData[0].walletId !== walletId) {
+        return new Response(
+          JSON.stringify({ error: 'Budget wallet mismatch', message: 'Selected budget must be linked to selected wallet' }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // For expense transactions, check if there's enough budget remaining
+      if (type === 'expense') {
+        const budgetRemaining = parseFloat(budgetData[0].remainingAmount);
+        const transactionAmount = parseFloat(amount);
+        
+        if (transactionAmount > budgetRemaining) {
+          return new Response(
+            JSON.stringify({ 
+              error: 'Insufficient budget', 
+              message: `Budget only has ${budgetData[0].remainingAmount} remaining, cannot spend ${amount}`
+            }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+    }
 
     // Create the transaction
     const [newTransaction] = await db
       .insert(transactions)
       .values({
         userId,
-        walletId, // Add wallet reference
-        categoryId: validCategoryId,
+        walletId, // Source wallet
         budgetId: budgetId || null, // Optional budget reference
+        categoryId: validCategoryId,
         type,
         amount,
         note: note || null,
@@ -182,24 +225,44 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    // Update wallet balance based on transaction type
+    // Update balances based on transaction type
     const transactionAmount = parseFloat(amount);
     if (type === 'income') {
-      // For income, add to wallet balance
+      // For income, add to both wallet and, if budget specified, budget remaining
       await db
         .update(wallets)
         .set({
           balance: sql`${wallets.balance} + ${transactionAmount}`,
         })
         .where(eq(wallets.id, walletId));
+
+      // If budget is specified, increase its remaining amount (since income increases available funds)
+      if (budgetId && budgetData) {
+        await db
+          .update(budgets)
+          .set({
+            remainingAmount: sql`${budgets.remainingAmount} + ${transactionAmount}`,
+          })
+          .where(eq(budgets.id, budgetId));
+      }
     } else if (type === 'expense') {
-      // For expense, subtract from wallet balance
+      // For expense, subtract from both wallet and, if budget specified, budget remaining
       await db
         .update(wallets)
         .set({
           balance: sql`${wallets.balance} - ${transactionAmount}`,
         })
         .where(eq(wallets.id, walletId));
+
+      // If budget is specified, decrease its remaining amount
+      if (budgetId && budgetData) {
+        await db
+          .update(budgets)
+          .set({
+            remainingAmount: sql`${budgets.remainingAmount} - ${transactionAmount}`,
+          })
+          .where(eq(budgets.id, budgetId));
+      }
     }
 
     return new Response(JSON.stringify(newTransaction), {

@@ -18,8 +18,7 @@ export const transactions = pgTable("transactions", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: varchar("user_id").notNull(),
   walletId: uuid("wallet_id")
-    .notNull()
-    .references(() => wallets.id, { onDelete: "cascade" }), // Reference to wallet
+    .references(() => wallets.id, { onDelete: "cascade" }), // Reference to wallet (nullable initially)
   categoryId: uuid("category_id")
     .notNull()
     .references(() => categories.id, { onDelete: "cascade" }),
@@ -46,11 +45,15 @@ export const wallets = pgTable("wallets", {
 export const budgets = pgTable("budgets", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: varchar("user_id").notNull(),
+  walletId: uuid("wallet_id")
+    .notNull()
+    .references(() => wallets.id, { onDelete: "cascade" }), // Source wallet for this budget
   categoryId: uuid("category_id")
     .references(() => categories.id, { onDelete: "cascade" }), // Optional category reference
   name: varchar("name", { length: 100 }), // For custom budget names
   description: text("description"), // For budget descriptions
-  amount: numeric("amount", { precision: 14, scale: 2 }).notNull(), // Budget amount
+  allocatedAmount: numeric("allocated_amount", { precision: 14, scale: 2 }).notNull(), // Amount allocated to this budget
+  remainingAmount: numeric("remaining_amount", { precision: 14, scale: 2 }).notNull(), // Amount remaining in this budget
   currency: varchar("currency", { length: 3 }).notNull().default('IDR'), // Currency code
   period: budgetPeriod("period").notNull(), // Budget period
   startDate: date("start_date").notNull(), // Start date of budget period

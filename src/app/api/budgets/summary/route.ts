@@ -36,10 +36,12 @@ export async function GET(request: NextRequest) {
     const activeBudgets = await db
       .select({
         id: budgets.id,
+        walletId: budgets.walletId,
         categoryId: budgets.categoryId,
         categoryName: categories.name,
         categoryType: categories.type,
-        budgetAmount: budgets.amount,
+        allocatedAmount: budgets.allocatedAmount,
+        remainingAmount: budgets.remainingAmount,
         currency: budgets.currency,
         period: budgets.period,
         startDate: budgets.startDate,
@@ -57,29 +59,19 @@ export async function GET(request: NextRequest) {
         )
       );
 
-    // Calculate actual spending for each budget category
+    // Calculate additional spending metrics for each budget
     const budgetSummaries = [];
     
     for (const budget of activeBudgets) {
-      // Get total spending for this budget during the period
-      // Build where conditions
+      // For the new system, we'll calculate the amount spent from this budget
+      // by looking at transactions that are directly linked to this budget
       const whereConditions = [
         eq(transactions.userId, userId),
+        eq(transactions.budgetId, budget.id),
         eq(transactions.type, 'expense'),
         gte(transactions.date, new Date(startDate)),
         lte(transactions.date, new Date(endDate))
       ];
-      
-      // Add condition based on budget type:
-      // For category-linked budgets: transactions matching the category
-      // For custom budgets: transactions directly linked to the budget
-      if (budget.categoryId) {
-        // Category-linked budget: include transactions in that category
-        whereConditions.push(eq(transactions.categoryId, budget.categoryId));
-      } else {
-        // Custom budget: include transactions directly linked to this budget
-        whereConditions.push(eq(transactions.budgetId, budget.id));
-      }
       
       const spendingResult = await db
         .select({
@@ -89,18 +81,19 @@ export async function GET(request: NextRequest) {
         .where(and(...whereConditions));
       
       const totalSpending = spendingResult[0]?.totalSpending || 0;
-      const budgetAmount = parseFloat(budget.budgetAmount);
-      const remaining = budgetAmount - totalSpending;
-      const percentageUsed = budgetAmount > 0 ? (totalSpending / budgetAmount) * 100 : 0;
+      const allocatedAmount = parseFloat(budget.allocatedAmount);
+      const remainingAmount = parseFloat(budget.remainingAmount);
+      const percentageUsed = allocatedAmount > 0 ? ((allocatedAmount - remainingAmount) / allocatedAmount) * 100 : 0;
       
       budgetSummaries.push({
         budgetId: budget.id,
+        walletId: budget.walletId,
         categoryId: budget.categoryId,
         categoryName: budget.categoryName,
         categoryType: budget.categoryType,
-        budgetAmount: budgetAmount,
+        allocatedAmount: allocatedAmount,
+        remainingAmount: remainingAmount,
         totalSpending: totalSpending,
-        remaining: remaining,
         percentageUsed: percentageUsed,
         currency: budget.currency,
         period: budget.period,

@@ -63,3 +63,28 @@ export const UpdateWalletSchema = z.object({
   balance: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Balance must be a valid number with up to 2 decimal places').optional(),
   isActive: z.boolean().optional(),
 });
+
+// Budget schemas
+export const CreateBudgetSchema = z.object({
+  walletId: z.string().uuid({ message: "Wallet ID must be a valid UUID" }),
+  categoryId: z.string().uuid().optional().nullable(),
+  name: z.string().max(100).optional(), // For custom budget names
+  description: z.string().optional(),
+  allocatedAmount: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Allocated amount must be a valid number with up to 2 decimal places'),
+  currency: z.string().length(3).default('IDR'),
+  period: z.enum(['weekly', 'monthly', 'yearly']),
+  startDate: z.string().min(1, 'Start date is required'),
+  endDate: z.string().min(1, 'End date is required'),
+});
+
+export const UpdateBudgetSchema = z.object({
+  walletId: z.string().uuid({ message: "Wallet ID must be a valid UUID" }).optional(),
+  categoryId: z.string().uuid().optional().nullable(),
+  name: z.string().max(100).optional(),
+  description: z.string().optional(),
+  allocatedAmount: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Allocated amount must be a valid number with up to 2 decimal places').optional(),
+  period: z.enum(['weekly', 'monthly', 'yearly']).optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  isActive: z.boolean().optional(),
+});
