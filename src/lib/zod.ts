@@ -88,3 +88,24 @@ export const UpdateBudgetSchema = z.object({
   endDate: z.string().optional(),
   isActive: z.boolean().optional(),
 });
+
+// Goal schemas
+export const CreateGoalSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(200, 'Name must be less than 200 characters'),
+  description: z.string().optional(),
+  targetAmount: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Target amount must be a valid number with up to 2 decimal places'),
+  currency: z.string().length(3).default('IDR'),
+  targetDate: z.string().optional(), // ISO date string
+  walletId: z.string().uuid().optional().nullable(),
+});
+
+export const UpdateGoalSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(200, 'Name must be less than 200 characters').optional(),
+  description: z.string().optional(),
+  targetAmount: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Target amount must be a valid number with up to 2 decimal places').optional(),
+  currentAmount: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Current amount must be a valid number with up to 2 decimal places').optional(),
+  targetDate: z.string().optional(), // ISO date string
+  status: z.enum(['active', 'paused', 'completed', 'cancelled']).optional(),
+  walletId: z.string().uuid().optional().nullable(),
+  isActive: z.boolean().optional(),
+});

@@ -52,3 +52,18 @@ export interface Budget {
   isActive: boolean;
   createdAt: string; // ISO string format
 }
+
+export interface Goal {
+  id: string;
+  userId: string;
+  name: string;
+  description: string | null;
+  targetAmount: string; // Using string to match the decimal type from the database
+  currentAmount: string; // Current progress amount
+  currency: string;
+  targetDate: string | null; // ISO date format
+  status: 'active' | 'paused' | 'completed' | 'cancelled';
+  walletId: string | null; // Optional linked wallet
+  isActive: boolean;
+  createdAt: string; // ISO string format
+}

@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUser } from '@clerk/nextjs';
 import { Transaction, Category, Budget, Wallet } from '@/types';
+import { useToast, toast } from '@/components/ui/toast';
 
 // Type for transaction data when submitting to the API
 type TransactionSubmitData = Omit<Transaction, 'id' | 'userId' | 'createdAt' | 'categoryName' | 'budgetName' | 'walletName'>;
@@ -38,6 +39,7 @@ export default function TransactionFormSheet({
   wallets
 }: TransactionFormSheetProps) {
   const { user } = useUser();
+  const { addToast } = useToast();
   const [formData, setFormData] = useState({
     walletId: '',
     categoryId: '',
@@ -48,6 +50,7 @@ export default function TransactionFormSheet({
     date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [budgetClearedMessage, setBudgetClearedMessage] = useState<string | null>(null);
 
   // Populate form when editing
   useEffect(() => {
@@ -121,6 +124,11 @@ export default function TransactionFormSheet({
             {transaction ? 'Edit Transaction' : 'Add Transaction'}
           </DialogTitle>
         </DialogHeader>
+        {budgetClearedMessage && (
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <p className="text-sm text-blue-700">{budgetClearedMessage}</p>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="type" className="text-right">
@@ -147,18 +155,26 @@ export default function TransactionFormSheet({
             <Select 
               value={formData.walletId} 
               onValueChange={(value) => {
-                // If there's already a budget selected that doesn't belong to this wallet, clear the budget
+                // If there's already a budget selected that doesn't belong to this wallet, auto-clear it
                 if (formData.budgetId) {
                   const selectedBudget = budgets.find(b => b.id === formData.budgetId);
                   if (selectedBudget && selectedBudget.walletId !== value) {
-                    // Ask user if they want to clear the budget or keep the old one
-                    if (window.confirm("The selected budget doesn't belong to this wallet. Do you want to remove the budget selection?")) {
-                      setFormData(prev => ({
-                        ...prev,
-                        walletId: value,
-                        budgetId: '' // Clear the budget when changing to a different wallet
-                      }));
-                    }
+                    // Auto-clear the budget and show a friendly message
+                    setFormData(prev => ({
+                      ...prev,
+                      walletId: value,
+                      budgetId: '' // Clear the budget when changing to a different wallet
+                    }));
+                    const budgetName = selectedBudget.name || 'Unnamed Budget';
+                    setBudgetClearedMessage(`Budget "${budgetName}" was cleared as it doesn't belong to the selected wallet.`);
+                    setTimeout(() => setBudgetClearedMessage(null), 4000);
+                    
+                    // Show toast notification
+                    addToast(toast.info(
+                      'Budget Selection Cleared',
+                      `"${budgetName}" was removed because it doesn't belong to the selected wallet.`,
+                      4000
+                    ));
                   } else {
                     setFormData(prev => ({
                       ...prev,
@@ -209,16 +225,20 @@ export default function TransactionFormSheet({
             <Select 
               value={formData.budgetId || ''} 
               onValueChange={(value) => {
-                handleSelectChange('budgetId', value);
-                // When changing budget, automatically select the related wallet
                 if (value) {
                   const selectedBudget = budgets.find(b => b.id === value);
                   if (selectedBudget) {
+                    // Auto-select the wallet that belongs to this budget
                     setFormData(prev => ({
                       ...prev,
+                      budgetId: value,
                       walletId: selectedBudget.walletId
                     }));
+                  } else {
+                    handleSelectChange('budgetId', value);
                   }
+                } else {
+                  handleSelectChange('budgetId', value);
                 }
               }}
             >

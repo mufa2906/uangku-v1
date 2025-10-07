@@ -4,6 +4,7 @@ import { pgTable, varchar, timestamp, text, uuid, numeric, pgEnum, date, boolean
 export const trxType = pgEnum("trx_type", ["income", "expense"]);
 export const budgetPeriod = pgEnum("budget_period", ["weekly", "monthly", "yearly"]);
 export const walletType = pgEnum("wallet_type", ["cash", "bank", "credit_card", "e_wallet", "savings"]);
+export const goalStatus = pgEnum("goal_status", ["active", "paused", "completed", "cancelled"]);
 
 export const categories = pgTable("categories", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -58,6 +59,22 @@ export const budgets = pgTable("budgets", {
   period: budgetPeriod("period").notNull(), // Budget period
   startDate: date("start_date").notNull(), // Start date of budget period
   endDate: date("end_date").notNull(), // End date of budget period
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export const goals = pgTable("goals", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").notNull(),
+  name: varchar("name", { length: 200 }).notNull(), // Goal name like "Emergency Fund", "New Car"
+  description: text("description"), // Optional description
+  targetAmount: numeric("target_amount", { precision: 14, scale: 2 }).notNull(), // Goal target amount
+  currentAmount: numeric("current_amount", { precision: 14, scale: 2 }).notNull().default('0'), // Current progress
+  currency: varchar("currency", { length: 3 }).notNull().default('IDR'), // Currency code
+  targetDate: date("target_date"), // Optional target completion date
+  status: goalStatus("status").notNull().default('active'),
+  walletId: uuid("wallet_id")
+    .references(() => wallets.id, { onDelete: "set null" }), // Optional linked wallet for auto-contributions
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });

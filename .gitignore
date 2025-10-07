@@ -32,3 +32,4 @@ yarn-error.log*
 # Supabase
 supabase/.temp/
 supabase/migrations/
+WARP.md

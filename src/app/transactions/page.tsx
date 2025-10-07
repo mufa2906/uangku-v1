@@ -6,10 +6,12 @@ import { useAuth } from '@clerk/nextjs';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Transaction, Category, Budget, Wallet } from '@/types';
 import { FloatingButton } from '@/components/ui/floating-button';
-import { Plus, Search, Filter, AlertCircle } from 'lucide-react';
+import { Plus, Search, Filter, AlertCircle, Download } from 'lucide-react';
 import TransactionFormSheet from '@/components/transactions/TransactionFormSheet';
+import ExportDialog from '@/components/export/ExportDialog';
 import AppBottomNav from '@/components/shells/AppBottomNav';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { Button } from '@/components/ui/button';
 
 export default function TransactionsPage() {
   const { userId } = useAuth();
@@ -24,6 +26,7 @@ export default function TransactionsPage() {
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
   useEffect(() => {
     if (userId) {
@@ -168,6 +171,14 @@ export default function TransactionsPage() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Transactions</h1>
           <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsExportDialogOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Export
+            </Button>
             <div className="relative">
               <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <input
@@ -276,6 +287,14 @@ export default function TransactionsPage() {
         categories={categories}
         budgets={budgets}
         wallets={wallets}
+      />
+
+      {/* Export Dialog */}
+      <ExportDialog
+        open={isExportDialogOpen}
+        onOpenChange={setIsExportDialogOpen}
+        wallets={wallets}
+        categories={categories}
       />
 
       {/* Bottom Navigation */}

@@ -6,6 +6,7 @@ import { dark } from '@clerk/themes'
 import { Theme } from '@clerk/types'
 import { useTheme } from 'next-themes'
 import { CurrencyProvider } from '@/contexts/CurrencyContext'
+import { ToastProvider } from '@/components/ui/toast'
 
 type Props = {
   children: React.ReactNode
@@ -17,7 +18,9 @@ export function Providers({ children }: Props) {
   return (
     <ClerkProvider appearance={resolvedTheme === 'dark' ? { baseTheme: dark } : {}}>
       <CurrencyProvider>
-        {children}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </CurrencyProvider>
     </ClerkProvider>
   )
