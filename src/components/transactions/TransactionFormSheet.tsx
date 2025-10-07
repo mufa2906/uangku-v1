@@ -146,7 +146,32 @@ export default function TransactionFormSheet({
             </Label>
             <Select 
               value={formData.walletId} 
-              onValueChange={(value) => handleSelectChange('walletId', value)}
+              onValueChange={(value) => {
+                // If there's already a budget selected that doesn't belong to this wallet, clear the budget
+                if (formData.budgetId) {
+                  const selectedBudget = budgets.find(b => b.id === formData.budgetId);
+                  if (selectedBudget && selectedBudget.walletId !== value) {
+                    // Ask user if they want to clear the budget or keep the old one
+                    if (window.confirm("The selected budget doesn't belong to this wallet. Do you want to remove the budget selection?")) {
+                      setFormData(prev => ({
+                        ...prev,
+                        walletId: value,
+                        budgetId: '' // Clear the budget when changing to a different wallet
+                      }));
+                    }
+                  } else {
+                    setFormData(prev => ({
+                      ...prev,
+                      walletId: value
+                    }));
+                  }
+                } else {
+                  setFormData(prev => ({
+                    ...prev,
+                    walletId: value
+                  }));
+                }
+              }}
             >
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select wallet" />

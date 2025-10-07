@@ -99,15 +99,14 @@ export async function PUT(
         return new Response('New wallet not found', { status: 404 });
       }
 
-      // Calculate available balance in the new wallet (including old allocated amount that will be freed)
+      // Check if new wallet has sufficient funds for the new allocation
       const newWalletBalance = parseFloat(newWallet[0].balance);
-      const availableBalance = newWalletBalance + oldAllocatedAmount; // Add back the old allocation
       
-      if (newAllocatedAmount > availableBalance) {
+      if (newAllocatedAmount > newWalletBalance) {
         return new Response(
           JSON.stringify({ 
             error: 'Insufficient funds', 
-            message: `Cannot allocate ${newAllocatedAmount} from wallet with available balance ${availableBalance}`
+            message: `Cannot allocate ${newAllocatedAmount} from wallet with balance ${newWalletBalance}`
           }),
           { status: 400, headers: { 'Content-Type': 'application/json' } }
         );
@@ -123,11 +122,11 @@ export async function PUT(
           })
           .where(eq(wallets.id, oldBudget.walletId));
           
-        // Deduct new allocated amount from new wallet (balance already includes the old allocation)
+        // Deduct new allocated amount from new wallet
         await db
           .update(wallets)
           .set({
-            balance: (availableBalance - newAllocatedAmount).toString(),
+            balance: sql`${wallets.balance} - ${newAllocatedAmount}`,
           })
           .where(eq(wallets.id, newWalletId));
       } else if (validatedData.allocatedAmount) {

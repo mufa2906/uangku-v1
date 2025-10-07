@@ -133,7 +133,7 @@ export async function PUT(
       }
     }
 
-    // Verify budget exists, belongs to user, and is linked to the wallet (if changing budget or wallet)
+    // Verify budget exists, belongs to user, and link wallets if needed
     if (newBudgetId) {
       const budgetData = await db
         .select({
@@ -178,27 +178,8 @@ export async function PUT(
     }
 
     // Calculate the adjustment needed for the OLD transaction (reverse its effect)
-    // Revert the old transaction's impact on wallet
-    if (oldTransaction.type === 'income') {
-      // Remove old income from wallet
-      await db
-        .update(wallets)
-        .set({
-          balance: sql`${wallets.balance} - ${oldAmount}`,
-        })
-        .where(oldTransaction.walletId ? eq(wallets.id, oldTransaction.walletId) : sql`FALSE`);
-    } else if (oldTransaction.type === 'expense') {
-      // Add back the old expense to wallet
-      await db
-        .update(wallets)
-        .set({
-          balance: sql`${wallets.balance} + ${oldAmount}`,
-        })
-        .where(oldTransaction.walletId ? eq(wallets.id, oldTransaction.walletId) : sql`FALSE`);
-    }
-
-    // If the old transaction was linked to a budget, revert its impact on the budget
     if (oldTransaction.budgetId) {
+      // If the old transaction was linked to a budget, revert its impact on the budget
       if (oldTransaction.type === 'income') {
         // Remove old income from budget
         await db
@@ -216,6 +197,25 @@ export async function PUT(
           })
           .where(eq(budgets.id, oldTransaction.budgetId));
       }
+    } else {
+      // If the old transaction was not linked to a budget, revert its impact on the wallet
+      if (oldTransaction.type === 'income') {
+        // Remove old income from wallet
+        await db
+          .update(wallets)
+          .set({
+            balance: sql`${wallets.balance} - ${oldAmount}`,
+          })
+          .where(oldTransaction.walletId ? eq(wallets.id, oldTransaction.walletId) : sql`FALSE`);
+      } else if (oldTransaction.type === 'expense') {
+        // Add back the old expense to wallet
+        await db
+          .update(wallets)
+          .set({
+            balance: sql`${wallets.balance} + ${oldAmount}`,
+          })
+          .where(oldTransaction.walletId ? eq(wallets.id, oldTransaction.walletId) : sql`FALSE`);
+      }
     }
 
     // Update the transaction
@@ -231,27 +231,8 @@ export async function PUT(
       .where(and(eq(transactions.id, id), eq(transactions.userId, userId)))
       .returning();
 
-    // Apply the new transaction's effect on wallet
-    if (newType === 'income') {
-      // Add new income to new wallet
-      await db
-        .update(wallets)
-        .set({
-          balance: sql`${wallets.balance} + ${newAmount}`,
-        })
-        .where(newWalletId ? eq(wallets.id, newWalletId) : sql`FALSE`);
-    } else if (newType === 'expense') {
-      // Subtract new expense from new wallet
-      await db
-        .update(wallets)
-        .set({
-          balance: sql`${wallets.balance} - ${newAmount}`,
-        })
-        .where(newWalletId ? eq(wallets.id, newWalletId) : sql`FALSE`);
-    }
-
-    // If the new transaction is linked to a budget, apply its effect to the budget
     if (newBudgetId) {
+      // If the new transaction is linked to a budget, apply its effect to the budget
       if (newType === 'income') {
         // Add new income to budget
         await db
@@ -268,6 +249,25 @@ export async function PUT(
             remainingAmount: sql`${budgets.remainingAmount} - ${newAmount}`,
           })
           .where(eq(budgets.id, newBudgetId));
+      }
+    } else {
+      // If the new transaction is not linked to a budget, apply its effect to the wallet
+      if (newType === 'income') {
+        // Add new income to new wallet
+        await db
+          .update(wallets)
+          .set({
+            balance: sql`${wallets.balance} + ${newAmount}`,
+          })
+          .where(newWalletId ? eq(wallets.id, newWalletId) : sql`FALSE`);
+      } else if (newType === 'expense') {
+        // Subtract new expense from new wallet
+        await db
+          .update(wallets)
+          .set({
+            balance: sql`${wallets.balance} - ${newAmount}`,
+          })
+          .where(newWalletId ? eq(wallets.id, newWalletId) : sql`FALSE`);
       }
     }
 
@@ -313,27 +313,8 @@ export async function DELETE(
     const transaction = existingTransaction[0];
     const transactionAmount = parseFloat(transaction.amount);
 
-    // Adjust wallet balance based on transaction type (reverse the effect)
-    if (transaction.type === 'income') {
-      // Remove this income from the wallet balance
-      await db
-        .update(wallets)
-        .set({
-          balance: sql`${wallets.balance} - ${transactionAmount}`,
-        })
-        .where(transaction.walletId ? eq(wallets.id, transaction.walletId) : sql`FALSE`);
-    } else if (transaction.type === 'expense') {
-      // Add back this expense to the wallet balance
-      await db
-        .update(wallets)
-        .set({
-          balance: sql`${wallets.balance} + ${transactionAmount}`,
-        })
-        .where(transaction.walletId ? eq(wallets.id, transaction.walletId) : sql`FALSE`);
-    }
-
-    // If the transaction was linked to a budget, adjust the budget balance as well
     if (transaction.budgetId) {
+      // If the transaction was linked to a budget, adjust the budget balance
       if (transaction.type === 'income') {
         // Remove this income from the budget
         await db
@@ -350,6 +331,25 @@ export async function DELETE(
             remainingAmount: sql`${budgets.remainingAmount} + ${transactionAmount}`,
           })
           .where(eq(budgets.id, transaction.budgetId));
+      }
+    } else {
+      // If the transaction was not linked to a budget, adjust the wallet balance
+      if (transaction.type === 'income') {
+        // Remove this income from the wallet balance
+        await db
+          .update(wallets)
+          .set({
+            balance: sql`${wallets.balance} - ${transactionAmount}`,
+          })
+          .where(transaction.walletId ? eq(wallets.id, transaction.walletId) : sql`FALSE`);
+      } else if (transaction.type === 'expense') {
+        // Add back this expense to the wallet balance
+        await db
+          .update(wallets)
+          .set({
+            balance: sql`${wallets.balance} + ${transactionAmount}`,
+          })
+          .where(transaction.walletId ? eq(wallets.id, transaction.walletId) : sql`FALSE`);
       }
     }
 

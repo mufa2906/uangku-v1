@@ -227,41 +227,43 @@ export async function POST(request: NextRequest) {
 
     // Update balances based on transaction type
     const transactionAmount = parseFloat(amount);
-    if (type === 'income') {
-      // For income, add to both wallet and, if budget specified, budget remaining
-      await db
-        .update(wallets)
-        .set({
-          balance: sql`${wallets.balance} + ${transactionAmount}`,
-        })
-        .where(eq(wallets.id, walletId));
-
-      // If budget is specified, increase its remaining amount (since income increases available funds)
-      if (budgetId && budgetData) {
+    if (budgetId && budgetData) {
+      // If transaction is linked to a budget, only update the budget
+      if (type === 'income') {
+        // For income, increase budget remaining amount
         await db
           .update(budgets)
           .set({
             remainingAmount: sql`${budgets.remainingAmount} + ${transactionAmount}`,
           })
           .where(eq(budgets.id, budgetId));
-      }
-    } else if (type === 'expense') {
-      // For expense, subtract from both wallet and, if budget specified, budget remaining
-      await db
-        .update(wallets)
-        .set({
-          balance: sql`${wallets.balance} - ${transactionAmount}`,
-        })
-        .where(eq(wallets.id, walletId));
-
-      // If budget is specified, decrease its remaining amount
-      if (budgetId && budgetData) {
+      } else if (type === 'expense') {
+        // For expense, decrease budget remaining amount
         await db
           .update(budgets)
           .set({
             remainingAmount: sql`${budgets.remainingAmount} - ${transactionAmount}`,
           })
           .where(eq(budgets.id, budgetId));
+      }
+    } else {
+      // If transaction is not linked to a budget, only update the wallet
+      if (type === 'income') {
+        // For income, add to wallet
+        await db
+          .update(wallets)
+          .set({
+            balance: sql`${wallets.balance} + ${transactionAmount}`,
+          })
+          .where(eq(wallets.id, walletId));
+      } else if (type === 'expense') {
+        // For expense, subtract from wallet
+        await db
+          .update(wallets)
+          .set({
+            balance: sql`${wallets.balance} - ${transactionAmount}`,
+          })
+          .where(eq(wallets.id, walletId));
       }
     }
 
