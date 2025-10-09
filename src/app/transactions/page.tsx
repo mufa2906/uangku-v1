@@ -225,8 +225,8 @@ export default function TransactionsPage() {
               <Card key={transaction.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-medium">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">
                         {transaction.categoryName || 'Uncategorized'}
                       </div>
                       {transaction.walletName && (
@@ -234,23 +234,23 @@ export default function TransactionsPage() {
                           {transaction.walletName}
                         </div>
                       )}
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-gray-500 truncate mt-1">
                         {transaction.note || 'No note'}
                       </div>
                       <div className="text-xs text-gray-400 mt-1">
                         {new Date(transaction.date).toLocaleDateString()}
                       </div>
                     </div>
-                    {transaction.budgetName && (
-                      <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                        {transaction.budgetName}
-                      </div>
-                    )}
-                    <div className="text-right">
+                    <div className="text-right ml-4">
+                      {transaction.budgetName && (
+                        <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full block mb-1">
+                          {transaction.budgetName}
+                        </div>
+                      )}
                       <div className={`font-medium text-lg ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
                         {transaction.type === 'income' ? '+' : '-'}{formatCurrency(parseFloat(transaction.amount))}
                       </div>
-                      <div className="flex gap-2 mt-2">
+                      <div className="flex gap-2 mt-2 justify-end">
                         <button 
                           onClick={() => handleEditTransaction(transaction)}
                           className="text-blue-600 hover:text-blue-800 text-sm"
