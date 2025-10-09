@@ -31,56 +31,51 @@ export default function TransactionsPage() {
   useEffect(() => {
     if (userId) {
       fetchTransactionsAndCategories();
-      fetchBudgets(); // Fetch budgets as well
-      fetchWallets(); // Fetch wallets as well
     }
   }, [userId]);
 
   const fetchTransactionsAndCategories = async () => {
     try {
       setLoading(true);
+      setError(null);
       
-      // Fetch transactions with explicit sorting (by date descending)
-      const transactionsRes = await fetch('/api/transactions?sortBy=date&sortOrder=desc');
-      if (transactionsRes.ok) {
-        const { transactions: fetchedTransactions } = await transactionsRes.json();
-        setTransactions(fetchedTransactions);
+      // Fetch transactions
+      const transactionsRes = await fetch('/api/transactions');
+      if (!transactionsRes.ok) {
+        throw new Error('Failed to fetch transactions');
       }
-
+      const transactionsData = await transactionsRes.json();
+      
       // Fetch categories
       const categoriesRes = await fetch('/api/categories');
-      if (categoriesRes.ok) {
-        const fetchedCategories = await categoriesRes.json();
-        setCategories(fetchedCategories);
+      if (!categoriesRes.ok) {
+        throw new Error('Failed to fetch categories');
       }
-    } catch (error) {
-      console.error('Error fetching transactions and categories:', error);
+      const categoriesData = await categoriesRes.json();
+      
+      // Fetch budgets
+      const budgetsRes = await fetch('/api/budgets');
+      if (!budgetsRes.ok) {
+        throw new Error('Failed to fetch budgets');
+      }
+      const budgetsData = await budgetsRes.json();
+      
+      // Fetch wallets
+      const walletsRes = await fetch('/api/wallets');
+      if (!walletsRes.ok) {
+        throw new Error('Failed to fetch wallets');
+      }
+      const walletsData = await walletsRes.json();
+      
+      setTransactions(transactionsData);
+      setCategories(categoriesData);
+      setBudgets(budgetsData);
+      setWallets(walletsData);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError('Failed to load data. Please try again later.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchBudgets = async () => {
-    try {
-      const response = await fetch('/api/budgets');
-      if (response.ok) {
-        const data = await response.json();
-        setBudgets(data);
-      }
-    } catch (error) {
-      console.error('Error fetching budgets:', error);
-    }
-  };
-
-  const fetchWallets = async () => {
-    try {
-      const response = await fetch('/api/wallets');
-      if (response.ok) {
-        const data = await response.json();
-        setWallets(data);
-      }
-    } catch (error) {
-      console.error('Error fetching wallets:', error);
     }
   };
 
@@ -89,72 +84,92 @@ export default function TransactionsPage() {
     setIsSheetOpen(true);
   };
 
+  const handleSubmitTransaction = async (data: Omit<Transaction, 'id' | 'userId' | 'createdAt' | 'categoryName' | 'budgetName' | 'walletName'>) => {
+    try {
+      const response = await fetch('/api/transactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...data,
+          userId
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create transaction');
+      }
+
+      const newTransaction = await response.json();
+      setTransactions([newTransaction, ...transactions]);
+      
+      // Update wallet balance if needed
+      await fetchTransactionsAndCategories(); // Refresh all data to update balances
+    } catch (err) {
+      console.error('Error creating transaction:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create transaction');
+    }
+  };
+
   const handleEditTransaction = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
     setIsSheetOpen(true);
   };
 
   const handleDeleteTransaction = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this transaction?')) {
-      try {
-        const response = await fetch(`/api/transactions/${id}`, {
-          method: 'DELETE',
-        });
-
-        if (response.ok) {
-          await fetchTransactionsAndCategories(); // Refresh data
-        } else {
-          console.error('Error deleting transaction:', await response.text());
-        }
-      } catch (error) {
-        console.error('Error deleting transaction:', error);
-      }
-    }
-  };
-
-  const handleSubmitTransaction = async (data: any) => {
+    if (!window.confirm('Are you sure you want to delete this transaction?')) return;
+    
     try {
-      setError(null); // Clear any previous errors
-      
-      let response;
-      if (selectedTransaction) {
-        // Update transaction
-        response = await fetch(`/api/transactions/${selectedTransaction.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
-        });
-      } else {
-        // Create transaction
-        response = await fetch('/api/transactions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
-        });
+      const response = await fetch(`/api/transactions/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete transaction');
       }
 
-      if (response.ok) {
-        await fetchTransactionsAndCategories(); // Refresh data
-        await fetchBudgets(); // Refresh budgets as well
-        setIsSheetOpen(false);
-      } else {
-        const errorData = await response.json();
-        const errorMessage = errorData.error || errorData.message || 'Failed to save transaction';
-        setError(`Error saving transaction: ${errorMessage}`);
-        console.error('Error saving transaction:', errorMessage);
-      }
-    } catch (error) {
-      const errorMessage = (error as Error).message || 'Network error occurred';
-      setError(`Error saving transaction: ${errorMessage}`);
-      console.error('Error saving transaction:', error);
+      setTransactions(transactions.filter(transaction => transaction.id !== id));
+      
+      // Update wallet balance after deletion
+      await fetchTransactionsAndCategories(); // Refresh all data to update balances
+    } catch (err) {
+      console.error('Error deleting transaction:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete transaction');
     }
   };
 
-  // Filter transactions based on search term and type
+  const handleUpdateTransaction = async (data: Partial<Transaction>) => {
+    if (!selectedTransaction) return;
+    
+    try {
+      const response = await fetch(`/api/transactions/${selectedTransaction.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update transaction');
+      }
+
+      const updatedTransaction = await response.json();
+      setTransactions(transactions.map(t => t.id === selectedTransaction.id ? updatedTransaction : t));
+      
+      // Update wallet balance if needed
+      await fetchTransactionsAndCategories(); // Refresh all data to update balances
+    } catch (err) {
+      console.error('Error updating transaction:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update transaction');
+    }
+  };
+
+  // Filter transactions based on search and type
   const filteredTransactions = transactions
     .filter(transaction => {
       const matchesSearch = transaction.note?.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -165,6 +180,15 @@ export default function TransactionsPage() {
     })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Ensure sorting by date descending
 
+  const exportTransactions = async () => {
+    try {
+      setIsExportDialogOpen(true);
+    } catch (err) {
+      console.error('Error exporting transactions:', err);
+      setError('Failed to export transactions');
+    }
+  };
+
   return (
     <div className="pb-20"> {/* Space for bottom nav */}
       <div className="p-4 max-w-4xl mx-auto">
@@ -173,7 +197,7 @@ export default function TransactionsPage() {
           <div className="flex gap-2">
             <Button 
               variant="outline" 
-              onClick={() => setIsExportDialogOpen(true)}
+              onClick={exportTransactions}
               className="flex items-center gap-2"
             >
               <Download className="h-4 w-4" />
@@ -225,8 +249,8 @@ export default function TransactionsPage() {
               <Card key={transaction.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">
+                    <div>
+                      <div className="font-medium">
                         {transaction.categoryName || 'Uncategorized'}
                       </div>
                       {transaction.walletName && (
@@ -234,23 +258,23 @@ export default function TransactionsPage() {
                           {transaction.walletName}
                         </div>
                       )}
-                      <div className="text-sm text-gray-500 truncate mt-1">
+                      <div className="text-sm text-gray-500">
                         {transaction.note || 'No note'}
                       </div>
                       <div className="text-xs text-gray-400 mt-1">
                         {new Date(transaction.date).toLocaleDateString()}
                       </div>
                     </div>
-                    <div className="text-right ml-4">
-                      {transaction.budgetName && (
-                        <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full block mb-1">
-                          {transaction.budgetName}
-                        </div>
-                      )}
+                    {transaction.budgetName && (
+                      <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                        {transaction.budgetName}
+                      </div>
+                    )}
+                    <div className="text-right">
                       <div className={`font-medium text-lg ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
                         {transaction.type === 'income' ? '+' : '-'}{formatCurrency(parseFloat(transaction.amount))}
                       </div>
-                      <div className="flex gap-2 mt-2 justify-end">
+                      <div className="flex gap-2 mt-2">
                         <button 
                           onClick={() => handleEditTransaction(transaction)}
                           className="text-blue-600 hover:text-blue-800 text-sm"
@@ -282,7 +306,7 @@ export default function TransactionsPage() {
       <TransactionFormSheet
         open={isSheetOpen}
         onOpenChange={setIsSheetOpen}
-        onSubmit={handleSubmitTransaction}
+        onSubmit={selectedTransaction ? handleUpdateTransaction : handleSubmitTransaction}
         transaction={selectedTransaction}
         categories={categories}
         budgets={budgets}
