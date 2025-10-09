@@ -7,12 +7,15 @@ import { Button } from '@/components/ui/button';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useState } from 'react';
 import Link from 'next/link';
-import { Settings } from 'lucide-react';
+import { Settings, Folder, Target } from 'lucide-react';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import AppBottomNav from '@/components/shells/AppBottomNav';
 
 export default function ProfilePage() {
   const { user } = useUser();
+  const { signOut } = useClerk();
+  const { currencySymbol } = useCurrency();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   if (!user) {
     return (
@@ -24,10 +27,6 @@ export default function ProfilePage() {
       </div>
     );
   }
-
-  const { signOut } = useClerk();
-  const { currencySymbol } = useCurrency();
-  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -64,8 +63,33 @@ export default function ProfilePage() {
               </div>
             </div>
             
-            {/* Account Management Section */}
+            {/* Finance Management Section */}
             <div className="mt-8 pt-6 border-t border-gray-200">
+              <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Finance Management</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                <Link href="/categories" className="w-full">
+                  <Button variant="outline" className="w-full justify-start">
+                    <Folder className="mr-2 h-4 w-4" />
+                    Categories
+                  </Button>
+                </Link>
+                <Link href="/budgets" className="w-full">
+                  <Button variant="outline" className="w-full justify-start">
+                    <Target className="mr-2 h-4 w-4" />
+                    Budgets
+                  </Button>
+                </Link>
+                <Link href="/goals" className="w-full">
+                  <Button variant="outline" className="w-full justify-start">
+                    <Target className="mr-2 h-4 w-4" />
+                    Goals
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            
+            {/* Account Management Section */}
+            <div className="pt-4 border-t border-gray-200">
               <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Account Management</h3>
               <div className="space-y-4">
                 <div className="p-3 bg-gray-50 rounded-md">
