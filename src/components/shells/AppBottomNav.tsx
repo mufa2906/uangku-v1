@@ -3,12 +3,13 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Home, Plus, FileText, Folder, User, Settings, Calendar, Wallet, Target } from 'lucide-react';
+import { Home, FileText, Wallet, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function AppBottomNav() {
   const pathname = usePathname();
 
+  // Navigation structure: Dashboard, Transactions, Wallets/Budgets, Profile
   const navItems = [
     {
       name: 'Dashboard',
@@ -26,16 +27,6 @@ export default function AppBottomNav() {
       icon: Wallet,
     },
     {
-      name: 'Budgets',
-      href: '/budgets',
-      icon: Calendar,
-    },
-    {
-      name: 'Goals',
-      href: '/goals',
-      icon: Target,
-    },
-    {
       name: 'Profile',
       href: '/profile',
       icon: User,
@@ -43,7 +34,7 @@ export default function AppBottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 dark:bg-gray-800 dark:border-gray-700 z-50">
       <div className="flex justify-around items-center py-3">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
@@ -54,7 +45,7 @@ export default function AppBottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex flex-col items-center justify-center',
+                'flex flex-col items-center justify-center min-w-[60px]',
                 isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'
               )}
             >
