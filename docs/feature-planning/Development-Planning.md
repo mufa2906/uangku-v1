@@ -6,7 +6,7 @@ This document outlines the development approach and best practices for the Uangk
 ## Development Process
 
 ### 1. Feature Planning
-- Create feature specification in `/docs/feature-plans/`
+- Create feature specification in `/docs/feature-planning/feature-plans/`
 - Define user stories and technical approach
 - Specify acceptance criteria
 - Consider impact on existing functionality
