@@ -15,6 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useUser } from '@clerk/nextjs';
 import { Transaction, Category, Budget, Wallet } from '@/types';
 import { useToast, toast } from '@/components/ui/toast';
+import AiTransactionInput from '@/components/transactions/AiTransactionInput';
+import { ParsedTransaction } from '@/lib/transaction-nlp';
+import { TransactionLearning } from '@/lib/transaction-learning';
 
 // Type for transaction data when submitting to the API
 type TransactionSubmitData = Omit<Transaction, 'id' | 'userId' | 'createdAt' | 'categoryName' | 'budgetName' | 'walletName'>;
@@ -51,6 +54,7 @@ export default function TransactionFormSheet({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [budgetClearedMessage, setBudgetClearedMessage] = useState<string | null>(null);
+  const [showAiInput, setShowAiInput] = useState(false);
 
   // Populate form when editing
   useEffect(() => {
@@ -77,6 +81,55 @@ export default function TransactionFormSheet({
       });
     }
   }, [transaction]);
+
+  // Handle AI-parsed transaction
+  const handleAiTransactionParsed = (parsed: ParsedTransaction) => {
+    setFormData(prev => ({
+      ...prev,
+      note: parsed.description || prev.note,
+      amount: parsed.amount ? parsed.amount.toString() : prev.amount,
+      type: parsed.type || prev.type,
+    }));
+  };
+
+  // Handle using AI-parsed transaction and store the pattern
+  const handleUseParsedTransaction = (parsed: ParsedTransaction) => {
+    setFormData(prev => ({
+      ...prev,
+      note: parsed.description || prev.note,
+      amount: parsed.amount ? parsed.amount.toString() : prev.amount,
+      type: parsed.type || prev.type,
+    }));
+    
+    if (parsed.category) {
+      // Find the category in our available categories
+      const matchedCategory = categories.find(cat => 
+        cat.name.toLowerCase() === parsed.category?.toLowerCase() ||
+        cat.name.toLowerCase().includes(parsed.category?.toLowerCase() || '')
+      );
+      
+      if (matchedCategory) {
+        setFormData(prev => ({
+          ...prev,
+          categoryId: matchedCategory.id
+        }));
+      }
+    }
+
+    // Store the pattern for learning
+    if (parsed.description && parsed.amount !== undefined && parsed.category) {
+      TransactionLearning.storePattern({
+        inputText: parsed.description,
+        detectedAmount: parsed.amount,
+        detectedCategory: parsed.category,
+        detectedDescription: parsed.description,
+        actualAmount: parsed.amount,
+        actualCategory: parsed.category,
+        actualDescription: parsed.description,
+        confidence: parsed.confidence
+      });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,6 +182,32 @@ export default function TransactionFormSheet({
             <p className="text-sm text-blue-700">{budgetClearedMessage}</p>
           </div>
         )}
+        
+        {!transaction && (
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-sm font-medium">AI Transaction Entry</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAiInput(!showAiInput)}
+              >
+                {showAiInput ? 'Hide AI Input' : 'Use AI Input'}
+              </Button>
+            </div>
+            
+            {showAiInput && (
+              <AiTransactionInput
+                categories={categories}
+                wallets={wallets}
+                onTransactionParsed={handleAiTransactionParsed}
+                onUseParsedTransaction={handleUseParsedTransaction}
+              />
+            )}
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="type" className="text-right">
