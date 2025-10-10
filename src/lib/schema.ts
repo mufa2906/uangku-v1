@@ -78,3 +78,28 @@ export const goals = pgTable("goals", {
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
+
+// Bill reminders/scheduled payments
+export const bills = pgTable("bills", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").notNull(),
+  name: varchar("name", { length: 100 }).notNull(), // e.g., "Electricity Bill", "Internet", "Rent"
+  description: text("description"), // Optional description
+  amount: numeric("amount", { precision: 14, scale: 2 }).notNull(), // Bill amount
+  currency: varchar("currency", { length: 3 }).notNull().default('IDR'), // Currency code
+  dueDate: date("due_date").notNull(), // When the bill is due
+  nextDueDate: date("next_due_date").notNull(), // Next due date for recurring bills
+  recurrencePattern: varchar("recurrence_pattern", { length: 20 }), // e.g., "monthly", "yearly", "weekly", "custom"
+  recurrenceInterval: numeric("recurrence_interval", { precision: 3, scale: 0 }), // e.g., every 2 months
+  autoNotify: boolean("auto_notify").notNull().default(true), // Whether to send reminders
+  notifyDaysBefore: numeric("notify_days_before", { precision: 2, scale: 0 }).notNull().default('3'), // Days before due date to notify
+  walletId: uuid("wallet_id")
+    .references(() => wallets.id, { onDelete: "set null" }), // Associated wallet for payment
+  categoryId: uuid("category_id")
+    .references(() => categories.id, { onDelete: "set null" }), // Associated category
+  isPaid: boolean("is_paid").notNull().default(false), // Whether the bill is paid
+  paidDate: date("paid_date"), // Date when the bill was paid
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});

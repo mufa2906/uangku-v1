@@ -1,5 +1,34 @@
 # Uangku - Changelog
 
+## v1.3.0 - Comprehensive Financial Management (October 2025)
+
+### Added
+- **Bill Reminder System**: Track recurring and one-time bills with automated notifications
+- **AI-Powered Transaction Entry**: Natural language processing for transaction input (e.g., "ate nasi padang 25000")
+- **Transaction Learning System**: AI improves suggestions based on user patterns over time
+- **Enhanced Budget Tracking**: Proper budget-wallet allocation with allocatedAmount/remainingAmount tracking
+- **Upcoming Bills Dashboard**: Visual display of bills due on dashboard with color-coded status
+- **Budget-Wallet Mismatch Prevention**: Auto-handling of wallet-budget selection conflicts with user feedback
+- **Bill Recurrence Engine**: Automatic next due date calculation for recurring bills
+- **Payment Status Tracking**: Mark bills as paid with payment date tracking
+
+### Changed
+- **Budget Architecture**: Updated to include allocatedAmount and remainingAmount for precise tracking
+- **Transaction Logic**: Fixed double-deduction issue - transactions affect either wallet OR budget (not both)
+- **UI/UX Improvements**: Enhanced transaction form with AI input toggle and improved wallet-budget coordination
+- **Dashboard Enhancements**: Added upcoming bills section with due date indicators
+- **Notification System**: Implemented bill reminder notifications with configurable timing
+- **API Validation**: Enhanced budget-wallet validation to prevent mismatch errors
+- **Form Workflow**: Improved transaction form with auto-clearing of budgets when wallets change
+
+### Fixed
+- **Transaction-Budget Double Deduction**: Fixed issue where money was deducted from both wallet and budget simultaneously
+- **Wallet-Budget Mismatch**: Resolved validation errors when changing wallet selection after budget choice
+- **Balance Calculation Accuracy**: Ensured proper financial tracking with single money accounting
+- **Recurrence Pattern Calculations**: Fixed bill recurrence calculations for various patterns
+
+---
+
 ## v1.2.0 - Goals & Enhanced User Experience (October 2025)
 
 ### Added

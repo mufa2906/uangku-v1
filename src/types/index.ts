@@ -67,3 +67,26 @@ export interface Goal {
   isActive: boolean;
   createdAt: string; // ISO string format
 }
+
+// Bill reminder type
+export interface Bill {
+  id: string;
+  userId: string;
+  name: string; // e.g., "Electricity Bill", "Internet", "Rent"
+  description: string | null; // Optional description
+  amount: string; // Bill amount
+  currency: string; // Currency code
+  dueDate: string; // When the bill is due (ISO date string)
+  nextDueDate: string; // Next due date for recurring bills (ISO date string)
+  recurrencePattern: 'weekly' | 'monthly' | 'yearly' | 'custom' | null; // Recurrence pattern
+  recurrenceInterval: string | null; // e.g., every 2 months
+  autoNotify: boolean; // Whether to send reminders
+  notifyDaysBefore: string; // Days before due date to notify
+  walletId: string | null; // Associated wallet for payment
+  categoryId: string | null; // Associated category
+  isPaid: boolean; // Whether the bill is paid
+  paidDate: string | null; // Date when the bill was paid (ISO date string)
+  isActive: boolean;
+  createdAt: string; // ISO string format
+  updatedAt: string; // ISO string format
+}

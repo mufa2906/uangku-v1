@@ -4,10 +4,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Transaction, Budget, Wallet } from '@/types';
+import { Transaction, Budget, Wallet, Bill } from '@/types';
 import WeeklyBarChart from '@/components/charts/WeeklyBar';
 import { FloatingButton } from '@/components/ui/floating-button';
-import { Plus, AlertCircle } from 'lucide-react';
+import { Plus, AlertCircle, Calendar, Clock } from 'lucide-react';
 import TransactionFormSheet from '@/components/transactions/TransactionFormSheet';
 import AppBottomNav from '@/components/shells/AppBottomNav';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -40,6 +40,7 @@ export default function DashboardPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]); // Add budgets state
   const [wallets, setWallets] = useState<Wallet[]>([]); // Add wallets state
+  const [bills, setBills] = useState<Bill[]>([]); // Add bills state
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -49,6 +50,7 @@ export default function DashboardPage() {
       fetchDashboardData();
       fetchBudgets(); // Fetch budgets as well
       fetchWallets(); // Fetch wallets as well
+      fetchBills(); // Fetch bills as well
     }
   }, [userId]);
 
@@ -103,6 +105,18 @@ export default function DashboardPage() {
     }
   };
 
+  const fetchBills = async () => {
+    try {
+      const response = await fetch('/api/bills?upcomingOnly=true');
+      if (response.ok) {
+        const data = await response.json();
+        setBills(data);
+      }
+    } catch (error) {
+      console.error('Error fetching bills:', error);
+    }
+  };
+
   const getTotalWalletBalance = () => {
     return wallets.reduce((total, wallet) => {
       return total + parseFloat(wallet.balance || '0');
@@ -143,6 +157,7 @@ export default function DashboardPage() {
         await fetchDashboardData(); // Refresh data
         await fetchBudgets(); // Refresh budgets as well
         await fetchWallets(); // Refresh wallets as well
+        await fetchBills(); // Refresh bills as well
         setIsSheetOpen(false);
       } else {
         const errorText = await response.text();
@@ -246,6 +261,84 @@ export default function DashboardPage() {
         <div className="mb-6">
           <BudgetSummary />
         </div>
+
+        {/* Upcoming Bills */}
+        {bills.length > 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-blue-500" />
+                Upcoming Bills
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {bills
+                  .filter(bill => !bill.isPaid) // Only show unpaid bills
+                  .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()) // Sort by due date
+                  .slice(0, 5) // Show only first 5 bills
+                  .map(bill => {
+                    const dueDate = new Date(bill.dueDate);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const billDate = new Date(bill.dueDate);
+                    billDate.setHours(0, 0, 0, 0);
+                    
+                    const timeDiff = billDate.getTime() - today.getTime();
+                    const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                    
+                    let statusColor = 'text-gray-600';
+                    if (daysLeft < 0) {
+                      statusColor = 'text-red-600';
+                    } else if (daysLeft <= 3) {
+                      statusColor = 'text-yellow-600';
+                    } else if (daysLeft <= 7) {
+                      statusColor = 'text-blue-600';
+                    }
+                    
+                    return (
+                      <div 
+                        key={bill.id} 
+                        className="flex items-center justify-between p-3 border-b border-gray-100 hover:bg-gray-50 rounded"
+                      >
+                        <div>
+                          <div className="font-medium">{bill.name}</div>
+                          <div className="flex items-center text-sm text-gray-500 mt-1">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            <span>{dueDate.toLocaleDateString()}</span>
+                            {daysLeft >= 0 && (
+                              <span className={`ml-2 ${statusColor}`}>
+                                {daysLeft === 0 ? 'Due today' : 
+                                 daysLeft === 1 ? `Due tomorrow` : 
+                                 `Due in ${daysLeft} days`}
+                              </span>
+                            )}
+                            {daysLeft < 0 && (
+                              <span className="ml-2 text-red-600">Overdue</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium">{formatCurrency(parseFloat(bill.amount))}</div>
+                          <div className="text-sm text-gray-500">{bill.walletName || 'Wallet'}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                {bills.filter(bill => !bill.isPaid).length > 5 && (
+                  <div className="text-center pt-2">
+                    <span className="text-sm text-gray-500">
+                      + {bills.filter(bill => !bill.isPaid).length - 5} more bills
+                    </span>
+                  </div>
+                )}
+                {bills.filter(bill => !bill.isPaid).length === 0 && (
+                  <p className="text-gray-500 text-center py-2">No upcoming bills</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Weekly Trend Card */}
         <Card className="mb-6">

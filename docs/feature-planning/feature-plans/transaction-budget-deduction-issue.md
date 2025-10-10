@@ -1,31 +1,32 @@
-# Transaction-Budget Double Deduction Issue
+# Transaction-Budget Double Deduction Issue - RESOLVED
 
-## Problem Statement
-When creating a transaction that links to both a wallet and a budget, the system is deducting the amount from both the wallet and the budget, effectively charging the user twice for the same transaction.
+## Problem Statement (RESOLVED)
+When creating a transaction that links to both a wallet and a budget, the system was deducting the amount from both the wallet and the budget, effectively charging the user twice for the same transaction.
 
-## Current Behavior (Buggy)
+## Original Issue (Buggy Behavior)
 - When creating a transaction that links to both a wallet and a budget
-- The transaction amount is deducted from both the wallet balance AND the budget remaining amount
-- This results in a double deduction, which is incorrect
+- The transaction amount was deducted from both the wallet balance AND the budget remaining amount
+- This resulted in a double deduction, which was incorrect
 
-## Expected Behavior (Correct)
-The system is actually designed correctly - when you spend money from a budget:
-- Wallet balance decreases (actual money spent)
-- Budget remaining amount decreases (allocated money used up)
+## Root Cause Analysis
+The system was designed correctly conceptually - when you spend money from a budget:
+- Wallet balance should decrease (actual money spent)
+- Budget remaining amount should decrease (allocated money used up)
 
-However, the issue is in the flow:
+However, the implementation was flawed in the flow:
 1. Budgets are created by allocating money from a wallet (wallet balance decreases)
-2. When transactions are made using that budget, money is deducted again from the wallet
-3. This results in double-charging the user
+2. When transactions are made using that budget, money was deducted again from the wallet
+3. This resulted in double-charging the user
 
-## Corrected Understanding
+## Corrected Understanding & Implementation
 - Budgets contain money that has already been allocated from wallets
 - When making a transaction against a budget, we should only deduct from the budget
-- The wallet has already been reduced when the budget was initially funded
+- The wallet should NOT be affected when a transaction is linked to a budget
+- When a transaction is NOT linked to a budget, then and only then should the wallet be affected
 
-## Implementation Plan
+## Resolution & Implementation
 
-### Changes needed:
+### Changes implemented:
 
 1. In transaction creation (POST /api/transactions):
    - If transaction is linked to a budget, only update the budget (not the wallet) 
@@ -37,45 +38,59 @@ However, the issue is in the flow:
 3. In transaction deletion (DELETE /api/transactions/[id]):
    - Revert based on whether the transaction was linked to a budget
 
-## Code Locations to Modify
+## Code Implementation (RESOLVED)
 
-1. `src/app/api/transactions/route.ts` - POST handler
-2. `src/app/api/transactions/[id]/route.ts` - PUT handler  
-3. `src/app/api/transactions/[id]/route.ts` - DELETE handler
+The issue has been successfully resolved in `src/app/api/transactions/route.ts`:
 
-## Updated Implementation Logic
-
-### For Transaction Creation (POST):
-```
-if (linked to budget) {
-  update only budget balance
+```typescript
+// In transaction creation (POST):
+if (budgetId && budgetData) {
+  // If transaction is linked to a budget, only update the budget
+  if (type === 'income') {
+    // For income, increase budget remaining amount
+    await db
+      .update(budgets)
+      .set({
+        remainingAmount: sql`${budgets.remainingAmount} + ${transactionAmount}`,
+      })
+      .where(eq(budgets.id, budgetId));
+  } else if (type === 'expense') {
+    // For expense, decrease budget remaining amount
+    await db
+      .update(budgets)
+      .set({
+        remainingAmount: sql`${budgets.remainingAmount} - ${transactionAmount}`,
+      })
+      .where(eq(budgets.id, budgetId));
+  }
 } else {
-  update only wallet balance
+  // If transaction is not linked to a budget, only update the wallet
+  if (type === 'income') {
+    // For income, add to wallet
+    await db
+      .update(wallets)
+      .set({
+        balance: sql`${wallets.balance} + ${transactionAmount}`,
+      })
+      .where(eq(wallets.id, walletId));
+  } else if (type === 'expense') {
+    // For expense, subtract from wallet
+    await db
+      .update(wallets)
+      .set({
+        balance: sql`${wallets.balance} - ${transactionAmount}`,
+      })
+      .where(eq(wallets.id, walletId));
+  }
 }
 ```
 
-### For Transaction Updates (PUT):
-```
-if (old transaction linked to budget) {
-  revert budget balance
-} else {
-  revert wallet balance
-}
+## Resolution Status
+- [x] Transaction creation properly handles wallet vs. budget updates
+- [x] Transaction updates properly handle wallet vs. budget adjustments
+- [x] Transaction deletion properly reverses the correct balance (wallet or budget)
+- [x] No more double deductions in the system
+- [x] Proper financial tracking with single money tracking
 
-if (new transaction linked to budget) {
-  update budget balance
-} else {
-  update wallet balance
-}
-```
-
-### For Transaction Deletion (DELETE):
-```
-if (transaction linked to budget) {
-  update budget balance (refund)
-} else {
-  update wallet balance (refund)
-}
-```
-
-This approach ensures that money is only tracked once, either against a budget or against a wallet, but not both simultaneously.
+## Result
+This approach ensures that money is only tracked once, either against a budget or against a wallet, but not both simultaneously. The issue has been successfully resolved and deployed.

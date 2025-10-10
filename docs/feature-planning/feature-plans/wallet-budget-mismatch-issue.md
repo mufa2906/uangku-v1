@@ -1,39 +1,80 @@
-# Wallet-Budget Mismatch Issue
+# Wallet-Budget Mismatch Issue - RESOLVED
 
-## Problem Statement
-When editing a transaction that is linked to a budget, users cannot change the wallet to one that is different from the budget's source wallet. This creates a poor user experience when users initially select the wrong wallet or budget combination.
+## Problem Statement (RESOLVED)
+When editing a transaction that is linked to a budget, users cannot change the wallet to one that is different from the budget's source wallet. This created a poor user experience when users initially select the wrong wallet or budget combination.
 
-## Current Behavior (Limiting)
+## Original Issue (Limiting Behavior)
 - When creating/updating a transaction, if a budget is selected, it must be linked to the currently selected wallet
-- If a user selects Budget A (linked to Wallet A) and then switches to Wallet B, the system throws a "Budget wallet mismatch" error
-- This prevents users from easily correcting mistakes or changing their wallet choice after selecting a budget
+- If a user selects Budget A (linked to Wallet A) and then switches to Wallet B, the system threw a "Budget wallet mismatch" error
+- This prevented users from easily correcting mistakes or changing their wallet choice after selecting a budget
 
-## Expected Behavior (User-Friendly)
-- Allow users to change either the wallet or budget selection independently
-- If a user changes the wallet when a budget is selected, either:
-  1. Clear the budget selection and prompt for a new budget matching the new wallet, OR
-  2. Automatically find a suitable budget in the new wallet if possible
+## Resolution & Implementation
 
-## Technical Implementation Plan
+The issue has been successfully resolved with a user-friendly approach that maintains data integrity while providing flexibility:
 
-### For Transaction Creation (POST /api/transactions):
-- When changing budget selection, automatically set the wallet to match the budget's wallet
-- When changing wallet selection with a budget already selected, show validation error but allow clearing the budget
+### For Transaction Creation/Updates (API):
+- When a budget is selected, the wallet automatically matches the budget's wallet
+- When a wallet is changed after budget selection, the budget is automatically cleared with a helpful notification
+- Proper validation still occurs to ensure budget-wallet consistency when both are selected
 
-### For Transaction Update (PUT /api/transactions/[id]):
-- Implement logic to handle changing wallet/budget combinations during updates
-- If a new wallet is selected that doesn't match the current budget, clear the budget or prompt for a valid budget
-- Ensure proper balance adjustments when changing wallet or budget selections
+### For UI Implementation (TransactionFormSheet.tsx):
+- When user selects a budget, the wallet field is automatically populated with the budget's wallet
+- When user changes wallet selection with a budget already selected, the budget is automatically cleared
+- A clear notification message is shown: "Budget 'Budget Name' was cleared as it doesn't belong to the selected wallet."
+- Toast notifications provide additional feedback for this workflow
+- Users can then select an appropriate budget from their chosen wallet
 
-### For UI Considerations:
-- When user selects a budget, automatically populate the wallet field with the budget's wallet
-- When user selects a wallet after a budget is chosen, show an alert if they don't match and offer to clear the budget
-- Consider implementing warning messages in the UI before validation errors occur
+## Code Implementation (RESOLVED)
 
-## Impact Assessment
-This is a UX issue that affects user workflow flexibility. Users should be able to correct their selection without being blocked by strict validation that doesn't account for the editing flow.
+The resolution is implemented in `src/components/transactions/TransactionFormSheet.tsx`:
 
-## Files to Modify
-- `src/components/transactions/TransactionFormSheet.tsx` (UI component)
-- `src/app/api/transactions/route.ts` (POST endpoint)
-- `src/app/api/transactions/[id]/route.ts` (PUT endpoint)
+```typescript
+<Select 
+  value={formData.walletId} 
+  onValueChange={(value) => {
+    // If there's already a budget selected that doesn't belong to this wallet, auto-clear it
+    if (formData.budgetId) {
+      const selectedBudget = budgets.find(b => b.id === formData.budgetId);
+      if (selectedBudget && selectedBudget.walletId !== value) {
+        // Auto-clear the budget and show a friendly message
+        setFormData(prev => ({
+          ...prev,
+          walletId: value,
+          budgetId: '' // Clear the budget when changing to a different wallet
+        }));
+        const budgetName = selectedBudget.name || 'Unnamed Budget';
+        setBudgetClearedMessage(`Budget "${budgetName}" was cleared as it doesn't belong to the selected wallet.`);
+        setTimeout(() => setBudgetClearedMessage(null), 4000);
+        
+        // Show toast notification
+        addToast(toast.info(
+          'Budget Selection Cleared',
+          `"${budgetName}" was removed because it doesn't belong to the selected wallet.`,
+          4000
+        ));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          walletId: value
+        }));
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        walletId: value
+      }));
+    }
+  }}
+>
+```
+
+## Resolution Status
+- [x] Wallet-bundle mismatch validation implemented in API
+- [x] User-friendly UI handling in transaction form
+- [x] Auto-clearing of budget when wallet is changed to different one
+- [x] Clear user notifications and feedback
+- [x] Toast notifications for better UX
+- [x] Maintained data integrity while improving user experience
+
+## Result
+Users can now seamlessly switch between wallets and budgets with appropriate guidance and automatic handling. When a user selects a budget, the appropriate wallet is automatically selected. When a user changes wallets, the budget selection is cleared with a helpful message, allowing them to choose an appropriate budget for the new wallet. This resolves the original user experience issue while maintaining data integrity.

@@ -109,3 +109,36 @@ export const UpdateGoalSchema = z.object({
   walletId: z.string().uuid().optional().nullable(),
   isActive: z.boolean().optional(),
 });
+// Bill schemas  
+export const CreateBillSchema = z.object({  
+  name: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),  
+  description: z.string().optional(),  
+  amount: z.string().regex(/\\\\\d+(\\\\.\\\\d{1,2})?$/, 'Amount must be a valid number with up to 2 decimal places'),  
+  currency: z.string().length(3).default('IDR'),  
+  dueDate: z.string().min(1, 'Due date is required'), // ISO date string  
+  nextDueDate: z.string().min(1, 'Next due date is required'), // ISO date string  
+  recurrencePattern: z.enum(['weekly', 'monthly', 'yearly', 'custom']).optional(),  
+  recurrenceInterval: z.string().regex(/\\\\\d+$/, 'Recurrence interval must be a number').optional(),  
+  autoNotify: z.boolean().optional().default(true),  
+  notifyDaysBefore: z.string().regex(/\\\\\d+$/, 'Notify days before must be a number').optional().default('3'),  
+  walletId: z.string().uuid().optional().nullable(),  
+  categoryId: z.string().uuid().optional().nullable(),  
+});  
+  
+export const UpdateBillSchema = z.object({  
+  name: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters').optional(),  
+  description: z.string().optional().nullable(),  
+  amount: z.string().regex(/\\\\\d+(\\\\.\\\\d{1,2})?$/, 'Amount must be a valid number with up to 2 decimal places').optional(),  
+  currency: z.string().length(3).optional(),  
+  dueDate: z.string().optional(), // ISO date string  
+  nextDueDate: z.string().optional(), // ISO date string  
+  recurrencePattern: z.enum(['weekly', 'monthly', 'yearly', 'custom']).optional(),  
+  recurrenceInterval: z.string().regex(/\\\\\d+$/, 'Recurrence interval must be a number').optional(),  
+  autoNotify: z.boolean().optional(),  
+  notifyDaysBefore: z.string().regex(/\\\\\d+$/, 'Notify days before must be a number').optional(),  
+  walletId: z.string().uuid().optional().nullable(),  
+  categoryId: z.string().uuid().optional().nullable(),  
+  isPaid: z.boolean().optional(),  
+  paidDate: z.string().optional(), // ISO date string  
+  isActive: z.boolean().optional(),  
+}); 
