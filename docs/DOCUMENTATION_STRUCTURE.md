@@ -15,13 +15,23 @@
 - `/feature-plans/` - Individual feature specifications:
   - `budgeting-tools.md` - Budgeting system implementation
   - `currency-support.md` - Multi-currency implementation
-  - `logout-functionality.md` - Authentication features
-  - `ai-text-input.md` - Planned AI features
+  - `logout-functionality.md` - Authentication features (planned)
+  - `ai-text-input.md` - AI transaction input implementation
+  - `goals-feature.md` - Goals tracking implementation
+  - `bill-reminders.md` - Bill reminder system implementation
+  - `navigation-enhancement.md` - Navigation improvement plan (planned)
 
 ### 👥 `/user-docs/` - User Documentation (For End Users)
 - `Changelog.md` - Version history and feature updates
 - `/user-guides/` - User guides:
   - `budgeting-tools.md` - User guide for budgeting features
+  - `goals-feature.md` - User guide for goal tracking
+  - `bills-feature.md` - User guide for bill reminders
+  - `ai-transaction-input.md` - User guide for AI transaction input
+
+## Additional Documentation
+- `DEVELOPMENT_PLAN.md` - Current development priorities and roadmap
+- `IMMEDIATE_TASKS.md` - Immediate next steps and task breakdown
 
 ## Documentation Principles
 - **Clarity Over Completeness**: Focus on essential information

@@ -1,5 +1,8 @@
 # Uangku Documentation
 
+## Current Status
+The Uangku application is feature-complete for its core financial management functionality. This documentation has been updated to reflect the current implementation status and future development priorities.
+
 ## Documentation Structure
 We've organized our documentation into three main categories for better accessibility and clarity:
 
@@ -13,17 +16,41 @@ Technical documentation for developers and system understanding
 ### 🎯 [Feature Planning](feature-planning/)
 Planning documentation for development team and roadmap
 - [Product Requirements (PRD)](feature-planning/PRD.md) - Product requirements and vision
-- [Roadmap](feature-planning/Roadmap.md) - Feature roadmap and priorities
+- [Roadmap](feature-planning/Roadmap.md) - Updated feature roadmap with completed and planned features
 - [Development Planning](feature-planning/Development-Planning.md) - Development process and best practices
-- [Feature Plans](feature-planning/feature-plans/) - Individual feature specifications
+- [Feature Plans](feature-planning/feature-plans/) - Individual feature specifications (completed and planned)
 
 ### 👥 [User Documentation](user-docs/)
 User-focused documentation and guides
 - [Changelog](user-docs/Changelog.md) - Version history and feature updates
 - [User Guides](user-docs/user-guides/) - User guides for specific features
 
+## Development Focus
+The application has completed all core functionality. Current development priorities are documented in:
+- [Development Plan](DEVELOPMENT_PLAN.md) - Overall development priorities
+- [Immediate Tasks](IMMEDIATE_TASKS.md) - Specific next steps to implement
+
+## Feature Status
+### ✅ Completed Features
+- Multi-wallet management
+- Transaction tracking with AI-powered entry
+- Flexible budgeting (category-linked and custom budgets)
+- Financial goal tracking
+- Bill reminders and scheduling
+- Currency support for Southeast Asian markets
+- Comprehensive dashboard with insights
+
+### 🔄 In Progress Features
+- Logout functionality with confirmation
+- Navigation enhancement (consolidated menu)
+
+### 🗓️ Future Features
+- PWA implementation with offline capabilities
+- Expense forecasting and prediction
+- Bank account integration
+
 ## For Different Audiences
-- **New Users**: Start with the main [README](../README.md) to understand Uangku
+- **New Developers**: Start with the [System Design](app-docs/SystemDesign.md) and [Development Plan](DEVELOPMENT_PLAN.md)
 - **Developers**: Explore [App Documentation](app-docs/)
-- **Product Team**: Review [Feature Planning](feature-planning/)
+- **Product Team**: Review [Feature Planning](feature-planning/) and [Immediate Tasks](IMMEDIATE_TASKS.md)
 - **End Users**: Check [User Documentation](user-docs/)
