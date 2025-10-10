@@ -1,4 +1,3 @@
-// src/app/transactions/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,27 +5,37 @@ import { useAuth } from '@clerk/nextjs';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Transaction, Category, Budget, Wallet } from '@/types';
 import { FloatingButton } from '@/components/ui/floating-button';
-import { Plus, Search, Filter, AlertCircle, Download } from 'lucide-react';
+import { Plus, Search, AlertCircle } from 'lucide-react';
 import TransactionFormSheet from '@/components/transactions/TransactionFormSheet';
-import ExportDialog from '@/components/export/ExportDialog';
 import AppBottomNav from '@/components/shells/AppBottomNav';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { Button } from '@/components/ui/button';
+
+// Define the API response type
+type TransactionApiResponse = {
+  transactions: Transaction[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+};
 
 export default function TransactionsPage() {
   const { userId } = useAuth();
   const { formatCurrency } = useCurrency();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [budgets, setBudgets] = useState<Budget[]>([]); // Add budgets state
-  const [wallets, setWallets] = useState<Wallet[]>([]); // Add wallets state
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [wallets, setWallets] = useState<Wallet[]>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+
 
   useEffect(() => {
     if (userId) {
@@ -44,7 +53,7 @@ export default function TransactionsPage() {
       if (!transactionsRes.ok) {
         throw new Error('Failed to fetch transactions');
       }
-      const transactionsData = await transactionsRes.json();
+      const transactionsData: TransactionApiResponse = await transactionsRes.json();
       
       // Fetch categories
       const categoriesRes = await fetch('/api/categories');
@@ -67,7 +76,7 @@ export default function TransactionsPage() {
       }
       const walletsData = await walletsRes.json();
       
-      setTransactions(transactionsData);
+      setTransactions(transactionsData.transactions);
       setCategories(categoriesData);
       setBudgets(budgetsData);
       setWallets(walletsData);
@@ -103,10 +112,10 @@ export default function TransactionsPage() {
       }
 
       const newTransaction = await response.json();
-      setTransactions([newTransaction, ...transactions]);
+      setTransactions([newTransaction, ...transactions]); // Add new transaction to the top
       
-      // Update wallet balance if needed
-      await fetchTransactionsAndCategories(); // Refresh all data to update balances
+      // Refresh all data to update balances
+      await fetchTransactionsAndCategories();
     } catch (err) {
       console.error('Error creating transaction:', err);
       setError(err instanceof Error ? err.message : 'Failed to create transaction');
@@ -133,8 +142,8 @@ export default function TransactionsPage() {
 
       setTransactions(transactions.filter(transaction => transaction.id !== id));
       
-      // Update wallet balance after deletion
-      await fetchTransactionsAndCategories(); // Refresh all data to update balances
+      // Refresh all data to update balances
+      await fetchTransactionsAndCategories();
     } catch (err) {
       console.error('Error deleting transaction:', err);
       setError(err instanceof Error ? err.message : 'Failed to delete transaction');
@@ -161,8 +170,8 @@ export default function TransactionsPage() {
       const updatedTransaction = await response.json();
       setTransactions(transactions.map(t => t.id === selectedTransaction.id ? updatedTransaction : t));
       
-      // Update wallet balance if needed
-      await fetchTransactionsAndCategories(); // Refresh all data to update balances
+      // Refresh all data to update balances
+      await fetchTransactionsAndCategories();
     } catch (err) {
       console.error('Error updating transaction:', err);
       setError(err instanceof Error ? err.message : 'Failed to update transaction');
@@ -178,43 +187,26 @@ export default function TransactionsPage() {
       
       return matchesSearch && matchesType;
     })
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Ensure sorting by date descending
-
-  const exportTransactions = async () => {
-    try {
-      setIsExportDialogOpen(true);
-    } catch (err) {
-      console.error('Error exporting transactions:', err);
-      setError('Failed to export transactions');
-    }
-  };
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Sort by date descending
 
   return (
-    <div className="pb-20"> {/* Space for bottom nav */}
+    <div className="pb-24 min-h-screen"> {/* Space for bottom nav with extra padding */}
       <div className="p-4 max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Transactions</h1>
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={exportTransactions}
-              className="flex items-center gap-2"
-            >
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
-            <div className="relative">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <h1 className="text-2xl font-bold w-full">Transactions</h1>
+          <div className="flex flex-col sm:flex-row gap-2 w-full">
+            <div className="relative w-full">
               <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <input
                 type="text"
                 placeholder="Search transactions..."
-                className="pl-8 pr-4 py-2 border rounded-md w-full max-w-xs"
+                className="pl-8 pr-4 py-2 border rounded-md w-full"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <select
-              className="border rounded-md px-3 py-2"
+              className="border rounded-md px-3 py-2 w-full sm:w-auto"
               value={filterType}
               onChange={(e) => setFilterType(e.target.value as any)}
             >
@@ -248,9 +240,9 @@ export default function TransactionsPage() {
             {filteredTransactions.map(transaction => (
               <Card key={transaction.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-medium">
+                  <div className="flex flex-col sm:flex-row justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">
                         {transaction.categoryName || 'Uncategorized'}
                       </div>
                       {transaction.walletName && (
@@ -258,19 +250,19 @@ export default function TransactionsPage() {
                           {transaction.walletName}
                         </div>
                       )}
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-gray-500 truncate mt-1">
                         {transaction.note || 'No note'}
                       </div>
                       <div className="text-xs text-gray-400 mt-1">
                         {new Date(transaction.date).toLocaleDateString()}
                       </div>
                     </div>
-                    {transaction.budgetName && (
-                      <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                        {transaction.budgetName}
-                      </div>
-                    )}
-                    <div className="text-right">
+                    <div className="flex flex-col items-end">
+                      {transaction.budgetName && (
+                        <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full mb-1">
+                          {transaction.budgetName}
+                        </div>
+                      )}
                       <div className={`font-medium text-lg ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
                         {transaction.type === 'income' ? '+' : '-'}{formatCurrency(parseFloat(transaction.amount))}
                       </div>
@@ -311,14 +303,6 @@ export default function TransactionsPage() {
         categories={categories}
         budgets={budgets}
         wallets={wallets}
-      />
-
-      {/* Export Dialog */}
-      <ExportDialog
-        open={isExportDialogOpen}
-        onOpenChange={setIsExportDialogOpen}
-        wallets={wallets}
-        categories={categories}
       />
 
       {/* Bottom Navigation */}

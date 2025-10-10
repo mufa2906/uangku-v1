@@ -15,6 +15,7 @@ import {
   DialogTitle,
   DialogFooter
 } from '@/components/ui/dialog';
+import BudgetFormSheet from '@/components/budgets/BudgetFormSheet';
 import { 
   Plus,
   Edit,
@@ -27,11 +28,17 @@ import AppBottomNav from '@/components/shells/AppBottomNav';
 import { Wallet, Budget } from '@/types';
 import { useCurrency } from '@/contexts/CurrencyContext';
 
+// Extend Budget type with spending information
+type BudgetWithSpending = Budget & {
+  spentAmount?: number;
+  percentageUsed?: number;
+};
+
 export default function WalletsPage() {
   const { userId } = useAuth();
   const { formatCurrency } = useCurrency();
   const [wallets, setWallets] = useState<Wallet[]>([]);
-  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [budgets, setBudgets] = useState<BudgetWithSpending[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,17 +55,7 @@ export default function WalletsPage() {
     balance: '0'
   });
   
-  const [budgetFormData, setBudgetFormData] = useState({
-    name: '',
-    categoryId: '',
-    allocatedAmount: '0',
-    remainingAmount: '0',
-    currency: 'IDR',
-    period: 'monthly',
-    startDate: new Date().toISOString().split('T')[0],
-    endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0],
-    isActive: true
-  });
+
 
   useEffect(() => {
     if (userId) {
@@ -100,8 +97,32 @@ export default function WalletsPage() {
         throw new Error('Failed to fetch budgets');
       }
       
-      const data = await response.json();
-      setBudgets(data);
+      const budgetsData = await response.json();
+      
+      // Fetch budget summaries to get spending information
+      const summaryResponse = await fetch('/api/budgets/summary');
+      if (!summaryResponse.ok) {
+        console.error('Failed to fetch budget summaries, continuing with just budget data');
+        // Continue with just the budget data, without spending info
+        setBudgets(budgetsData);
+      } else {
+        // Merge budget data with summary data
+        const summaryData = await summaryResponse.json();
+        
+        // Create budgets with spending info
+        const budgetsWithSpending = budgetsData.map((budget: Budget) => {
+          // Find matching summary data
+          const summary = summaryData.find((s: any) => s.budgetId === budget.id);
+          
+          return {
+            ...budget,
+            spentAmount: summary?.spentAmount || (parseFloat(budget.allocatedAmount) - parseFloat(budget.remainingAmount)),
+            percentageUsed: summary?.percentageUsed || 0
+          };
+        });
+        
+        setBudgets(budgetsWithSpending);
+      }
     } catch (err) {
       console.error('Error fetching budgets:', err);
       setError('Failed to load budgets. Please try again.');
@@ -135,17 +156,6 @@ export default function WalletsPage() {
 
   const handleCreateBudget = () => {
     setEditingBudget(null);
-    setBudgetFormData({
-      name: '',
-      categoryId: '',
-      allocatedAmount: '0',
-      remainingAmount: '0',
-      currency: 'IDR',
-      period: 'monthly',
-      startDate: new Date().toISOString().split('T')[0],
-      endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0],
-      isActive: true
-    });
     setBudgetFormOpen(true);
   };
 
@@ -162,17 +172,6 @@ export default function WalletsPage() {
 
   const handleEditBudget = (budget: Budget) => {
     setEditingBudget(budget);
-    setBudgetFormData({
-      name: budget.name || '',
-      categoryId: budget.categoryId || '',
-      allocatedAmount: budget.allocatedAmount,
-      remainingAmount: budget.remainingAmount,
-      currency: budget.currency,
-      period: budget.period,
-      startDate: budget.startDate,
-      endDate: budget.endDate,
-      isActive: budget.isActive
-    });
     setBudgetFormOpen(true);
   };
 
@@ -228,7 +227,6 @@ export default function WalletsPage() {
         },
         body: JSON.stringify({
           ...walletFormData,
-          balance: parseFloat(walletFormData.balance),
           userId
         }),
       });
@@ -252,41 +250,53 @@ export default function WalletsPage() {
     }
   };
 
-  const submitBudget = async () => {
+  const submitNewBudget = async (budgetData: Partial<Budget>) => {
     if (!userId) return;
     
     try {
-      const url = editingBudget ? `/api/budgets/${editingBudget.id}` : '/api/budgets';
-      const method = editingBudget ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
+      const response = await fetch('/api/budgets', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...budgetFormData,
-          allocatedAmount: parseFloat(budgetFormData.allocatedAmount),
-          userId
-        }),
+        body: JSON.stringify(budgetData),
       });
       
       if (!response.ok) {
-        throw new Error(editingBudget ? 'Failed to update budget' : 'Failed to create budget');
+        throw new Error('Failed to create budget');
       }
       
       const result = await response.json();
-      
-      if (editingBudget) {
-        setBudgets(budgets.map(b => b.id === result.id ? result : b));
-      } else {
-        setBudgets([...budgets, result]);
-      }
-      
+      setBudgets([...budgets, result]);
       setBudgetFormOpen(false);
     } catch (err) {
       console.error('Error saving budget:', err);
-      setError(editingBudget ? 'Failed to update budget' : 'Failed to create budget');
+      setError('Failed to create budget');
+    }
+  };
+
+  const submitBudgetUpdate = async (budgetData: Partial<Budget>) => {
+    if (!userId || !editingBudget) return;
+    
+    try {
+      const response = await fetch(`/api/budgets/${editingBudget.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(budgetData),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update budget');
+      }
+      
+      const result = await response.json();
+      setBudgets(budgets.map(b => b.id === result.id ? result : b));
+      setBudgetFormOpen(false);
+    } catch (err) {
+      console.error('Error saving budget:', err);
+      setError('Failed to update budget');
     }
   };
 
@@ -422,9 +432,9 @@ export default function WalletsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {budgets.map((budget) => {
                   const category = categories.find(cat => cat.id === budget.categoryId);
-                  const spentAmount = 0; // In a real implementation, calculate actual spending
+                  const spentAmount = budget.spentAmount || 0;
+                  const percentageUsed = budget.percentageUsed || 0;
                   const remaining = parseFloat(budget.allocatedAmount) - spentAmount;
-                  const percentage = (spentAmount / parseFloat(budget.allocatedAmount)) * 100;
                   
                   return (
                     <Card key={budget.id} className="hover:shadow-md transition-shadow">
@@ -449,15 +459,15 @@ export default function WalletsPage() {
                         <div className="mb-3">
                           <div className="flex justify-between text-sm mb-1">
                             <span>Used: {formatCurrency(spentAmount)}</span>
-                            <span>{Math.round(percentage)}%</span>
+                            <span>{Math.round(percentageUsed)}%</span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div 
                               className={`h-2 rounded-full ${
-                                percentage > 90 ? 'bg-red-500' : 
-                                percentage > 75 ? 'bg-yellow-500' : 'bg-green-500'
+                                percentageUsed >= 90 ? 'bg-red-500' : 
+                                percentageUsed >= 75 ? 'bg-yellow-500' : 'bg-green-500'
                               }`} 
-                              style={{ width: `${Math.min(100, percentage)}%` }}
+                              style={{ width: `${Math.min(100, percentageUsed)}%` }}
                             ></div>
                           </div>
                         </div>
@@ -576,92 +586,15 @@ export default function WalletsPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Budget Form Dialog */}
-        <Dialog open={budgetFormOpen} onOpenChange={setBudgetFormOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{editingBudget ? 'Edit Budget' : 'Create New Budget'}</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div>
-                <Label htmlFor="budgetName">Budget Name</Label>
-                <Input
-                  id="budgetName"
-                  value={budgetFormData.name}
-                  onChange={(e) => setBudgetFormData({...budgetFormData, name: e.target.value})}
-                  placeholder="e.g., Groceries, Entertainment"
-                />
-              </div>
-              <div>
-                <Label htmlFor="category">Category (optional)</Label>
-                <Select value={budgetFormData.categoryId} onValueChange={(value) => setBudgetFormData({...budgetFormData, categoryId: value})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category or leave empty for custom budget" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map(category => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="amount">Amount</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  value={budgetFormData.allocatedAmount}
-                  onChange={(e) => setBudgetFormData({...budgetFormData, allocatedAmount: e.target.value})}
-                  placeholder="0.00"
-                />
-              </div>
-              <div>
-                <Label htmlFor="period">Period</Label>
-                <Select value={budgetFormData.period} onValueChange={(value) => setBudgetFormData({...budgetFormData, period: value})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="yearly">Yearly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="startDate">Start Date</Label>
-                  <Input
-                    id="startDate"
-                    type="date"
-                    value={budgetFormData.startDate}
-                    onChange={(e) => setBudgetFormData({...budgetFormData, startDate: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="endDate">End Date</Label>
-                  <Input
-                    id="endDate"
-                    type="date"
-                    value={budgetFormData.endDate}
-                    onChange={(e) => setBudgetFormData({...budgetFormData, endDate: e.target.value})}
-                  />
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setBudgetFormOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={submitBudget}>
-                {editingBudget ? 'Update' : 'Create'} Budget
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {/* Budget Form Sheet - Using shared component */}
+        <BudgetFormSheet 
+          open={budgetFormOpen}
+          onOpenChange={setBudgetFormOpen}
+          onSubmit={editingBudget ? (data) => submitBudgetUpdate(data) : submitNewBudget}
+          budget={editingBudget}
+          categories={categories}
+          wallets={wallets}
+        />
 
         {/* Floating Action Button - only show when on Wallets tab */}
         {activeTab === 'wallets' && (
