@@ -39,10 +39,11 @@ The application has completed all core functionality. Current development priori
 - Bill reminders and scheduling
 - Currency support for Southeast Asian markets
 - Comprehensive dashboard with insights
+- Logout functionality with confirmation dialog
+- Navigation enhancement (centralized access in Profile page)
 
 ### 🔄 In Progress Features
-- Logout functionality with confirmation
-- Navigation enhancement (consolidated menu)
+- Enhanced accessibility features
 
 ### 🗓️ Future Features
 - PWA implementation with offline capabilities

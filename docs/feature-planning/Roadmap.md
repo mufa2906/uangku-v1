@@ -28,10 +28,10 @@ Empower users to take control of their finances with simple, intuitive tools tha
 - Reports and export functionality
 
 ## Current Focus (Q4 2025)
-🔄 **UX Enhancement**
-- Logout functionality with confirmation dialog
-- Navigation enhancement (consolidated menu system)
+🔄 **Platform Experience**
+- Progressive Web App (PWA) implementation
 - Enhanced accessibility features
+- Offline functionality for transaction entry
 
 ## Future Enhancements (2026)
 🗓️ **Advanced Features**
