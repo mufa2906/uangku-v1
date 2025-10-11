@@ -1,15 +1,21 @@
-# Wallet-Budget Mismatch Issue - RESOLVED
+# Wallet-Budget Mismatch Issue
 
-## Problem Statement (RESOLVED)
+## Status
+RESOLVED - [Date] - Fixed wallet-budget mismatch issue when editing transactions
+
+## Overview
 When editing a transaction that is linked to a budget, users cannot change the wallet to one that is different from the budget's source wallet. This created a poor user experience when users initially select the wrong wallet or budget combination.
 
-## Original Issue (Limiting Behavior)
-- When creating/updating a transaction, if a budget is selected, it must be linked to the currently selected wallet
-- If a user selects Budget A (linked to Wallet A) and then switches to Wallet B, the system threw a "Budget wallet mismatch" error
-- This prevented users from easily correcting mistakes or changing their wallet choice after selecting a budget
+## User Stories (if applicable)
+N/A
 
-## Resolution & Implementation
+## Requirements (if applicable)
+- Fix the wallet-budget mismatch issue in transaction editing
+- Allow users to change wallets when budgets are selected
+- Provide clear feedback when budget is cleared due to wallet change
+- Maintain data integrity while improving user experience
 
+## Technical Implementation
 The issue has been successfully resolved with a user-friendly approach that maintains data integrity while providing flexibility:
 
 ### For Transaction Creation/Updates (API):
@@ -24,8 +30,21 @@ The issue has been successfully resolved with a user-friendly approach that main
 - Toast notifications provide additional feedback for this workflow
 - Users can then select an appropriate budget from their chosen wallet
 
-## Code Implementation (RESOLVED)
+## Database Schema (if applicable)
+N/A
 
+## API Endpoints (if applicable)
+N/A
+
+## Implementation Status
+- [x] Wallet-bundle mismatch validation implemented in API
+- [x] User-friendly UI handling in transaction form
+- [x] Auto-clearing of budget when wallet is changed to different one
+- [x] Clear user notifications and feedback
+- [x] Toast notifications for better UX
+- [x] Maintained data integrity while improving user experience
+
+## UI/UX Implementation (if applicable)
 The resolution is implemented in `src/components/transactions/TransactionFormSheet.tsx`:
 
 ```typescript
@@ -68,13 +87,20 @@ The resolution is implemented in `src/components/transactions/TransactionFormShe
 >
 ```
 
-## Resolution Status
-- [x] Wallet-bundle mismatch validation implemented in API
-- [x] User-friendly UI handling in transaction form
-- [x] Auto-clearing of budget when wallet is changed to different one
-- [x] Clear user notifications and feedback
-- [x] Toast notifications for better UX
-- [x] Maintained data integrity while improving user experience
+## Type Definitions (if applicable)
+N/A
 
-## Result
-Users can now seamlessly switch between wallets and budgets with appropriate guidance and automatic handling. When a user selects a budget, the appropriate wallet is automatically selected. When a user changes wallets, the budget selection is cleared with a helpful message, allowing them to choose an appropriate budget for the new wallet. This resolves the original user experience issue while maintaining data integrity.
+## Current Implementation Details (if applicable)
+Result: Users can now seamlessly switch between wallets and budgets with appropriate guidance and automatic handling. When a user selects a budget, the appropriate wallet is automatically selected. When a user changes wallets, the budget selection is cleared with a helpful message, allowing them to choose an appropriate budget for the new wallet. This resolves the original user experience issue while maintaining data integrity.
+
+## Known Issues (if applicable)
+Original Issue (Limiting Behavior):
+- When creating/updating a transaction, if a budget is selected, it must be linked to the currently selected wallet
+- If a user selects Budget A (linked to Wallet A) and then switches to Wallet B, the system threw a "Budget wallet mismatch" error
+- This prevented users from easily correcting mistakes or changing their wallet choice after selecting a budget
+
+## Future Enhancements
+N/A
+
+## References & Resources
+N/A

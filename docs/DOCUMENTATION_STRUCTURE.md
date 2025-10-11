@@ -15,11 +15,9 @@
 - `/feature-plans/` - Individual feature specifications:
   - `budgeting-tools.md` - Budgeting system implementation
   - `currency-support.md` - Multi-currency implementation
-  - `logout-functionality.md` - Authentication features (implemented)
   - `ai-text-input.md` - AI transaction input implementation
   - `goals-feature.md` - Goals tracking implementation
   - `bill-reminders.md` - Bill reminder system implementation
-  - `navigation-enhancement.md` - Navigation improvement plan (implemented)
   - `transaction-budget-deduction-issue.md` - Issue resolution documentation (implemented)
   - `wallet-budget-mismatch-issue.md` - Issue resolution documentation (implemented)
 
