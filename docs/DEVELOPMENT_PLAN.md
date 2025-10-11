@@ -25,9 +25,9 @@ The Uangku application is currently feature-complete for its core financial mana
 
 ### Phase 2: Platform Experience (Q4 2025)
 3. **PWA Implementation** - Convert to Progressive Web App
-   - Offline functionality for transaction entry
    - Native-like mobile experience
    - Push notifications for bills and budgets
+   - (Offline functionality temporarily deferred)
 
 4. **Enhanced Accessibility** - Improve app accessibility
    - Screen reader optimization

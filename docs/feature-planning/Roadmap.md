@@ -31,7 +31,7 @@ Empower users to take control of their finances with simple, intuitive tools tha
 🔄 **Platform Experience**
 - Progressive Web App (PWA) implementation
 - Enhanced accessibility features
-- Offline functionality for transaction entry
+- (Offline functionality temporarily deferred)
 
 ## Future Enhancements (2026)
 🗓️ **Advanced Features**
@@ -43,9 +43,9 @@ Empower users to take control of their finances with simple, intuitive tools tha
 ## Platform Considerations
 📱 **Mobile Experience**
 - Progressive Web App (PWA) for native-like experience
-- Offline functionality for transaction entry
 - Touch-optimized interfaces
 - Push notifications for budgets and bills
+- (Offline functionality temporarily deferred)
 
 ## Success Metrics
 - User retention: D1 ≥ 50%, D7 ≥ 30%

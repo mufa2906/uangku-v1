@@ -31,11 +31,11 @@
 - **Priority**: Medium
 - **Estimate**: 4-5 days
 - **Implementation Steps**:
-  1. Add service worker for offline functionality
-  2. Implement offline transaction entry capability
-  3. Add app manifest for installability
-  4. Add push notification support for bills/budgets
-  5. Test offline functionality thoroughly
+  1. Add service worker for PWA functionality
+  2. Add app manifest for installability
+  3. Add push notification support for bills/budgets
+  4. (Offline transaction entry temporarily deferred)
+  5. Test PWA functionality thoroughly
 
 ## Development Guidelines
 - Create feature branch for each task

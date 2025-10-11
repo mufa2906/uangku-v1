@@ -46,7 +46,7 @@ The application has completed all core functionality. Current development priori
 - Enhanced accessibility features
 
 ### 🗓️ Future Features
-- PWA implementation with offline capabilities
+- PWA implementation (offline capabilities temporarily deferred)
 - Expense forecasting and prediction
 - Bank account integration
 
