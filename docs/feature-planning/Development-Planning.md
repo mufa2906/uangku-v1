@@ -64,8 +64,10 @@ This document outlines the development approach and best practices for the Uangk
 - Component testing for UI elements
 - End-to-end testing for critical user flows
 
-## Next Steps
-1. AI-powered transaction entry
-2. Enhanced financial insights
-3. Goal-based financial planning
-4. Multi-device synchronization
+## Future Development Areas
+These areas represent potential future enhancements for the application:
+
+1. Enhanced financial insights beyond current dashboard analytics
+2. Advanced budget forecasting and prediction capabilities  
+3. Multi-device synchronization (beyond current PWA capabilities)
+4. Bank account integration for automatic transaction import

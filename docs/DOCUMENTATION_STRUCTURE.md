@@ -20,6 +20,8 @@
   - `goals-feature.md` - Goals tracking implementation
   - `bill-reminders.md` - Bill reminder system implementation
   - `navigation-enhancement.md` - Navigation improvement plan (implemented)
+  - `transaction-budget-deduction-issue.md` - Issue resolution documentation (implemented)
+  - `wallet-budget-mismatch-issue.md` - Issue resolution documentation (implemented)
 
 ### 👥 `/user-docs/` - User Documentation (For End Users)
 - `Changelog.md` - Version history and feature updates
