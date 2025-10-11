@@ -5,7 +5,7 @@ import { useAuth } from '@clerk/nextjs';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Transaction, Category, Budget, Wallet } from '@/types';
 import { FloatingButton } from '@/components/ui/floating-button';
-import { Plus, Search, AlertCircle } from 'lucide-react';
+import { Plus, Search, AlertCircle, Calendar, CalendarDays } from 'lucide-react';
 import TransactionFormSheet from '@/components/transactions/TransactionFormSheet';
 import AppBottomNav from '@/components/shells/AppBottomNav';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -20,6 +20,17 @@ type TransactionApiResponse = {
     total: number;
     pages: number;
   };
+};
+
+// Define period types
+type PeriodType = 'daily' | 'weekly' | 'monthly';
+
+// Define grouped transaction type
+type GroupedTransaction = {
+  period: string;
+  date: Date;
+  transactions: Transaction[];
+  total: number;
 };
 
 export default function TransactionsPage() {
@@ -95,6 +106,9 @@ export default function TransactionsPage() {
 
   const handleSubmitTransaction = async (data: Omit<Transaction, 'id' | 'userId' | 'createdAt' | 'categoryName' | 'budgetName' | 'walletName'>) => {
     try {
+      // Clear any previous errors
+      setError(null);
+      
       const response = await fetch('/api/transactions', {
         method: 'POST',
         headers: {
@@ -178,7 +192,88 @@ export default function TransactionsPage() {
     }
   };
 
-  // Filter transactions based on search and type
+  // Function to format period based on type
+  const formatPeriod = (date: Date, periodType: PeriodType): string => {
+    switch (periodType) {
+      case 'daily':
+        return date.toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        });
+      case 'weekly':
+        // Calculate the start of the week (Sunday)
+        const startOfWeek = new Date(date);
+        startOfWeek.setDate(date.getDate() - date.getDay());
+        return `Week of ${startOfWeek.toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric' 
+        })}`;
+      case 'monthly':
+        return date.toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long' 
+        });
+      default:
+        return date.toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        });
+    }
+  };
+
+  // Function to group transactions by period
+  const groupTransactionsByPeriod = (transactions: Transaction[], periodType: PeriodType): GroupedTransaction[] => {
+    const groupedMap = new Map<string, { transactions: Transaction[]; total: number }>();
+    
+    // Group transactions by period first
+    transactions.forEach(transaction => {
+      const date = new Date(transaction.date);
+      const periodKey = formatPeriod(date, periodType);
+      
+      if (!groupedMap.has(periodKey)) {
+        groupedMap.set(periodKey, { transactions: [], total: 0 });
+      }
+      
+      const group = groupedMap.get(periodKey)!;
+      group.transactions.push(transaction);
+      
+      const amount = parseFloat(transaction.amount);
+      group.total += transaction.type === 'expense' ? -amount : amount;
+    });
+    
+    // Convert map to array and process each group
+    const result: GroupedTransaction[] = [];
+    groupedMap.forEach((value, key) => {
+      // Sort transactions within each group by date (most recent first)
+      const sortedGroupTransactions = value.transactions.sort((a, b) => 
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+      
+      // Calculate the most recent transaction date for this group to sort periods
+      let periodDate = new Date();
+      if (sortedGroupTransactions.length > 0) {
+        periodDate = new Date(sortedGroupTransactions[0].date); // Most recent transaction in the group
+      }
+      
+      result.push({
+        period: key,
+        date: periodDate,
+        transactions: sortedGroupTransactions,
+        total: value.total
+      });
+    });
+    
+    // Sort the periods by date (most recent first)
+    result.sort((a, b) => b.date.getTime() - a.date.getTime());
+    
+    return result;
+  };
+
+  // Filter transactions based on search and type, then sort by createdAt (most recent first)
   const filteredTransactions = transactions
     .filter(transaction => {
       const matchesSearch = transaction.note?.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -187,7 +282,11 @@ export default function TransactionsPage() {
       
       return matchesSearch && matchesType;
     })
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Sort by date descending
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()); // Sort by creation time descending (newest first)
+
+  // Group transactions by the selected period
+  const [periodType, setPeriodType] = useState<PeriodType>('daily');
+  const groupedTransactions = groupTransactionsByPeriod(filteredTransactions, periodType);
 
   return (
     <div className="pb-24 min-h-screen"> {/* Space for bottom nav with extra padding */}
@@ -214,6 +313,15 @@ export default function TransactionsPage() {
               <option value="income">Income</option>
               <option value="expense">Expense</option>
             </select>
+            <select
+              className="border rounded-md px-3 py-2 w-full sm:w-auto"
+              value={periodType}
+              onChange={(e) => setPeriodType(e.target.value as PeriodType)}
+            >
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
           </div>
         </div>
 
@@ -228,7 +336,7 @@ export default function TransactionsPage() {
 
         {loading ? (
           <div className="text-center py-10 text-gray-500">Loading transactions...</div>
-        ) : filteredTransactions.length === 0 ? (
+        ) : groupedTransactions.length === 0 ? (
           <Card>
             <CardContent className="py-10 text-center text-gray-500">
               <p>No transactions found.</p>
@@ -236,54 +344,57 @@ export default function TransactionsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {filteredTransactions.map(transaction => (
-              <Card key={transaction.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex flex-col sm:flex-row justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">
-                        {transaction.categoryName || 'Uncategorized'}
-                      </div>
-                      {transaction.walletName && (
-                        <div className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full inline-block mt-1">
-                          {transaction.walletName}
-                        </div>
-                      )}
-                      <div className="text-sm text-gray-500 truncate mt-1">
-                        {transaction.note || 'No note'}
-                      </div>
-                      <div className="text-xs text-gray-400 mt-1">
-                        {new Date(transaction.date).toLocaleDateString()}
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      {transaction.budgetName && (
-                        <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full mb-1">
-                          {transaction.budgetName}
-                        </div>
-                      )}
-                      <div className={`font-medium text-lg ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                        {transaction.type === 'income' ? '+' : '-'}{formatCurrency(parseFloat(transaction.amount))}
-                      </div>
-                      <div className="flex gap-2 mt-2">
-                        <button 
-                          onClick={() => handleEditTransaction(transaction)}
-                          className="text-blue-600 hover:text-blue-800 text-sm"
-                        >
-                          Edit
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteTransaction(transaction.id)}
-                          className="text-red-600 hover:text-red-800 text-sm"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
+          <div className="space-y-6">
+            {groupedTransactions.map((group) => (
+              <div key={group.period} className="space-y-4">
+                <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <CalendarDays className="h-5 w-5 text-blue-500" />
+                    {group.period}
+                  </h3>
+                  <div className={`text-lg font-bold ${group.total >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {group.total >= 0 ? '+' : ''}{formatCurrency(Math.abs(group.total))}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+                
+                <div className="space-y-3">
+                  {group.transactions.map(transaction => (
+                    <Card key={transaction.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex flex-col sm:flex-row justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-gray-800 truncate">
+                              {transaction.categoryName || 'Uncategorized'}
+                            </div>
+                            <div className="text-sm text-gray-600 truncate mt-1">
+                              {transaction.note || 'No note'}
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end min-w-0">
+                            <div className={`font-medium text-lg ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                              {transaction.type === 'income' ? '+' : '-'}{formatCurrency(parseFloat(transaction.amount))}
+                            </div>
+                            <div className="flex gap-3 mt-2">
+                              <button 
+                                onClick={() => handleEditTransaction(transaction)}
+                                className="text-blue-500 hover:text-blue-700 text-sm"
+                              >
+                                Edit
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteTransaction(transaction.id)}
+                                className="text-red-500 hover:text-red-700 text-sm"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}

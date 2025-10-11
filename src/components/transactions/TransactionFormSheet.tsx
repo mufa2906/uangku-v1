@@ -18,6 +18,7 @@ import { useToast, toast } from '@/components/ui/toast';
 import AiTransactionInput from '@/components/transactions/AiTransactionInput';
 import { ParsedTransaction } from '@/lib/transaction-nlp';
 import { TransactionLearning } from '@/lib/transaction-learning';
+import { validateTransactionForm } from '@/lib/transaction-validation';
 
 // Type for transaction data when submitting to the API
 type TransactionSubmitData = Omit<Transaction, 'id' | 'userId' | 'createdAt' | 'categoryName' | 'budgetName' | 'walletName'>;
@@ -52,9 +53,20 @@ export default function TransactionFormSheet({
     note: '',
     date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
   });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [budgetClearedMessage, setBudgetClearedMessage] = useState<string | null>(null);
   const [showAiInput, setShowAiInput] = useState(false);
+
+  // Check if the form is valid
+  const isFormValid = () => {
+    return formData.walletId !== '' && 
+           formData.categoryId !== '' && 
+           formData.amount !== '' && 
+           parseFloat(formData.amount) > 0 && 
+           formData.date !== '' && 
+           (!formErrors.type && !formErrors.walletId && !formErrors.categoryId && !formErrors.amount && !formErrors.date);
+  };
 
   // Populate form when editing
   useEffect(() => {
@@ -133,6 +145,18 @@ export default function TransactionFormSheet({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate form data using Zod schema
+    const validation = validateTransactionForm(formData);
+    
+    if (!validation.success) {
+      // Show validation errors
+      validation.errors.forEach(error => {
+        addToast(toast.error('Validation Error', error.message));
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
@@ -148,6 +172,22 @@ export default function TransactionFormSheet({
       // Check if we're online
       // Always submit to server directly
       await onSubmit(submitData);
+      
+      // Clear form after successful submission
+      setFormData({
+        walletId: '',
+        categoryId: '',
+        budgetId: '',
+        type: 'expense',
+        amount: '',
+        note: '',
+        date: new Date().toISOString().split('T')[0],
+      });
+      
+      // Clear form errors
+      setFormErrors({});
+      
+      // Close the sheet
       onOpenChange(false);
     } catch (error) {
       console.error('Error submitting transaction:', error);
@@ -160,12 +200,32 @@ export default function TransactionFormSheet({
     }
   };
 
+  // Handle input changes with real-time validation
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+    
+    // Validate the changed field in real-time
+    const updatedData = { ...formData, [name]: value };
+    const validation = validateTransactionForm(updatedData);
+    
+    if (!validation.success) {
+      const fieldErrors = validation.errors.reduce((acc, error) => {
+        acc[error.field] = error.message;
+        return acc;
+      }, {} as Record<string, string>);
+      setFormErrors(fieldErrors);
+    } else {
+      // Clear error for this field if valid
+      setFormErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -173,11 +233,30 @@ export default function TransactionFormSheet({
       ...prev,
       [name]: value
     }));
+    
+    // Validate the changed field in real-time
+    const updatedData = { ...formData, [name]: value };
+    const validation = validateTransactionForm(updatedData);
+    
+    if (!validation.success) {
+      const fieldErrors = validation.errors.reduce((acc, error) => {
+        acc[error.field] = error.message;
+        return acc;
+      }, {} as Record<string, string>);
+      setFormErrors(fieldErrors);
+    } else {
+      // Clear error for this field if valid
+      setFormErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {transaction ? 'Edit Transaction' : 'Add Transaction'}
@@ -215,6 +294,7 @@ export default function TransactionFormSheet({
         )}
         
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+          {/* Type - determines transaction direction */}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="type" className="text-right">
               Type
@@ -231,78 +311,14 @@ export default function TransactionFormSheet({
                 <SelectItem value="expense">Expense</SelectItem>
               </SelectContent>
             </Select>
+            {formErrors.type && (
+              <div className="col-span-3 col-start-2 mt-1 text-sm text-red-500">
+                {formErrors.type}
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="walletId" className="text-right">
-              Wallet
-            </Label>
-            <Select 
-              value={formData.walletId} 
-              onValueChange={(value) => {
-                // If there's already a budget selected that doesn't belong to this wallet, auto-clear it
-                if (formData.budgetId) {
-                  const selectedBudget = budgets.find(b => b.id === formData.budgetId);
-                  if (selectedBudget && selectedBudget.walletId !== value) {
-                    // Auto-clear the budget and show a friendly message
-                    setFormData(prev => ({
-                      ...prev,
-                      walletId: value,
-                      budgetId: '' // Clear the budget when changing to a different wallet
-                    }));
-                    const budgetName = selectedBudget.name || 'Unnamed Budget';
-                    setBudgetClearedMessage(`Budget "${budgetName}" was cleared as it doesn't belong to the selected wallet.`);
-                    setTimeout(() => setBudgetClearedMessage(null), 4000);
-                    
-                    // Show toast notification
-                    addToast(toast.info(
-                      'Budget Selection Cleared',
-                      `"${budgetName}" was removed because it doesn't belong to the selected wallet.`,
-                      4000
-                    ));
-                  } else {
-                    setFormData(prev => ({
-                      ...prev,
-                      walletId: value
-                    }));
-                  }
-                } else {
-                  setFormData(prev => ({
-                    ...prev,
-                    walletId: value
-                  }));
-                }
-              }}
-            >
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select wallet" />
-              </SelectTrigger>
-              <SelectContent>
-                {wallets.map(wallet => (
-                  <SelectItem key={wallet.id} value={wallet.id}>
-                    {wallet.name} ({wallet.type})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="amount" className="text-right">
-              Amount
-            </Label>
-            <Input
-              id="amount"
-              name="amount"
-              type="number"
-              step="0.01"
-              value={formData.amount}
-              onChange={handleInputChange}
-              className="col-span-3"
-              required
-            />
-          </div>
-
+          {/* Budget (optional) - financial goal or category budget */}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="budgetId" className="text-right">
               Budget
@@ -338,8 +354,75 @@ export default function TransactionFormSheet({
                 ))}
               </SelectContent>
             </Select>
+            {formErrors.budgetId && (
+              <div className="col-span-3 col-start-2 mt-1 text-sm text-red-500">
+                {formErrors.budgetId}
+              </div>
+            )}
           </div>
 
+          {/* Wallet - source/destination of funds */}
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="walletId" className="text-right">
+              Wallet
+            </Label>
+            <Select 
+              value={formData.walletId} 
+              onValueChange={(value) => {
+                // If there's already a budget selected that doesn't belong to this wallet, auto-clear it
+                if (formData.budgetId) {
+                  const selectedBudget = budgets.find(b => b.id === formData.budgetId);
+                  if (selectedBudget && selectedBudget.walletId !== value) {
+                    // Auto-clear the budget and show a friendly message
+                    setFormData(prev => ({
+                      ...prev,
+                      walletId: value,
+                      budgetId: '' // Clear the budget when changing to a different wallet
+                    }));
+                    const budgetName = selectedBudget.name || 'Unnamed Budget';
+                    setBudgetClearedMessage(`Budget "${budgetName}" was cleared as it doesn't belong to the selected wallet.`);
+                    setTimeout(() => setBudgetClearedMessage(null), 4000);
+                    
+                    // Show toast notification
+                    addToast(toast.info(
+                      'Budget Selection Cleared',
+                      `"${budgetName}" was removed because it doesn't belong to the selected wallet.`,
+                      4000
+                    ));
+                  } else {
+                    handleSelectChange('walletId', value);
+                  }
+                } else {
+                  handleSelectChange('walletId', value);
+                }
+                
+                // Clear any errors for this field when value changes
+                setFormErrors(prev => {
+                  const newErrors = { ...prev };
+                  delete newErrors.walletId;
+                  return newErrors;
+                });
+              }}
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select wallet" />
+              </SelectTrigger>
+              <SelectContent>
+                {wallets.map(wallet => (
+                  <SelectItem key={wallet.id} value={wallet.id}>
+                    {wallet.name} ({wallet.type})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {formErrors.walletId && (
+              <div className="col-span-3 col-start-2 mt-1 text-sm text-red-500">
+                {formErrors.walletId}
+              </div>
+            )}
+          </div>
+
+          {/* Category - classification of transaction */}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="categoryId" className="text-right">
               Category
@@ -361,8 +444,55 @@ export default function TransactionFormSheet({
                   ))}
               </SelectContent>
             </Select>
+            {formErrors.categoryId && (
+              <div className="col-span-3 col-start-2 mt-1 text-sm text-red-500">
+                {formErrors.categoryId}
+              </div>
+            )}
           </div>
 
+          {/* Amount - monetary value of transaction */}
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="amount" className="text-right">
+              Amount
+            </Label>
+            <Input
+              id="amount"
+              name="amount"
+              type="number"
+              step="0.01"
+              value={formData.amount}
+              onChange={handleInputChange}
+              className="col-span-3"
+              required
+            />
+            {formErrors.amount && (
+              <div className="col-span-3 col-start-2 mt-1 text-sm text-red-500">
+                {formErrors.amount}
+              </div>
+            )}
+          </div>
+
+          {/* Note - description or details */}
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="note" className="text-right">
+              Note
+            </Label>
+            <Input
+              id="note"
+              name="note"
+              value={formData.note}
+              onChange={handleInputChange}
+              className="col-span-3"
+            />
+            {formErrors.note && (
+              <div className="col-span-3 col-start-2 mt-1 text-sm text-red-500">
+                {formErrors.note}
+              </div>
+            )}
+          </div>
+
+          {/* Date - when transaction occurred */}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="date" className="text-right">
               Date
@@ -376,19 +506,11 @@ export default function TransactionFormSheet({
               className="col-span-3"
               required
             />
-          </div>
-
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="note" className="text-right">
-              Note
-            </Label>
-            <Input
-              id="note"
-              name="note"
-              value={formData.note}
-              onChange={handleInputChange}
-              className="col-span-3"
-            />
+            {formErrors.date && (
+              <div className="col-span-3 col-start-2 mt-1 text-sm text-red-500">
+                {formErrors.date}
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
@@ -399,7 +521,10 @@ export default function TransactionFormSheet({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting || Object.keys(formErrors).length > 0 || !isFormValid()}
+            >
               {isSubmitting ? 'Saving...' : 'Save'}
             </Button>
           </div>

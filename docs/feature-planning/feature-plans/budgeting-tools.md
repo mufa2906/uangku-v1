@@ -111,7 +111,6 @@ N/A
 - Advanced budget analytics and insights
 
 ## References & Resources
-
 ### Budgeting Methodologies Supported
 1. **50/30/20 Rule**: 50% needs, 30% wants, 20% savings
 2. **Zero-Based Budgeting**: Income - Expenses = 0
@@ -123,23 +122,3 @@ N/A
 - **Category-Linked Budgets**: Traditional approach linking to existing expense categories
 - **Custom Budgets**: Named budgets without category linkage (e.g., "Travel Fund", "Emergency Savings")
 - **Hybrid Budgets**: Named budgets with optional category linking
-
-## Budgeting Methodologies Supported
-1. **50/30/20 Rule**: 50% needs, 30% wants, 20% savings
-2. **Zero-Based Budgeting**: Income - Expenses = 0
-3. **Envelope Method**: Allocate funds to different spending categories
-4. **Pay Yourself First**: Automate savings before spending
-5. **Goal-Based Budgeting**: Custom budgets for specific financial goals
-
-## Flexible Budget Architecture
-- **Category-Linked Budgets**: Traditional approach linking to existing expense categories
-- **Custom Budgets**: Named budgets without category linkage (e.g., "Travel Fund", "Emergency Savings")
-- **Hybrid Budgets**: Named budgets with optional category linking
-
-## Future Enhancements
-- Budget forecasting based on historical data
-- Shared budgets for families/households
-- Automatic budget adjustment suggestions
-- Budget vs. actual variance analysis
-- Budget notifications and alerts
-- Advanced budget analytics and insights

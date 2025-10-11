@@ -13,6 +13,7 @@
 - `Roadmap.md` - Feature roadmap and priorities
 - `Development-Planning.md` - Development process and best practices
 - `/feature-plans/` - Individual feature specifications:
+  - `application-enhancements.md` - Application improvements and bug fixes
   - `budgeting-tools.md` - Budgeting system implementation
   - `currency-support.md` - Multi-currency implementation
   - `ai-text-input.md` - AI transaction input implementation

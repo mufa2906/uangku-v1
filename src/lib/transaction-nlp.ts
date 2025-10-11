@@ -32,8 +32,11 @@ const incomeCategoryPatterns: { [key: string]: string[] } = {
   'Other': ['lain', 'lainnya', 'misc', 'serba']
 };
 
-// Regex patterns for amount extraction
+// Regex patterns for amount extraction - prioritize larger numbers first
 const AMOUNT_PATTERNS = [
+  /(?:^|\s)(\d{5,})(?=\s|$)/g,  // 5+ digit numbers (like 23000)
+  /(?:^|\s)(\d{4})(?=\s|$)/g,   // 4 digit numbers (like 5000)
+  /(?:^|\s)(\d{3})(?=\s|$)/g,   // 3 digit numbers (like 500)
   /(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)/g, // Standard decimal format
   /(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)/g, // Indonesian format (1.000,75)
   /(\d+)/g, // Simple number extraction  
@@ -51,7 +54,15 @@ const TRANSPORT_PATTERNS = [
 const FOOD_PATTERNS = [
   /makan (.*?) (\d+)/,
   /beli (.*?) (\d+)/,
+  /food (.*?) (\d+)/,
   /(.*?) (?:harga|seharga) (\d+)/,
+];
+
+// Enhanced patterns to detect "category description amount" format
+const GENERAL_PATTERNS = [
+  /(makan|beli|food)\s+(.*?)\s+(\d{3,})/,  // Basic food/buy patterns like "makan sop sapi 23000"
+  /(makan|beli|food|transport|isi pulsa|pulsa|listrik|air|telpon|sewa|kontrakan|sop|nasi|bakso|mie|soto|rendang|padang|gudeg|gulai|ayam|ikan|telur|sayur|buah|kopi|koffie|teh|minum|minuman|jajan|snack|mie ayam|sate|sate padang|nasi uduk|nasi kuning|pecel|gado|gorengan|cemilan)\s+(.*?)\s+(\d{3,})/,  // category description amount (for all amounts)
+  /(\w+)\s+((?:\S+\s*)*?)\s+(\d{3,})/,  // more generic pattern to catch all combinations
 ];
 
 export class TransactionNLP {
@@ -68,6 +79,44 @@ export class TransactionNLP {
     availableWallets: { id: string; name: string }[] = []
   ): ParsedTransaction {
     const lowerText = text.toLowerCase().trim();
+    
+    // FIRST: Check for Indonesian transaction patterns to preserve description words
+    const indonesianMatch = lowerText.match(/^(makan|beli|food|transport|isi\spulsa|pulsa|listrik|air|telpon|sewa|kontrakan)\s+(.+?)(?:\s+(\d+))?$/);
+    let indonesianResult: Partial<ParsedTransaction> | null = null;
+    
+    if (indonesianMatch) {
+      const categoryWord = indonesianMatch[1];
+      const possibleDescription = indonesianMatch[2].trim();
+      const possibleAmount = indonesianMatch[3] ? parseFloat(indonesianMatch[3]) : undefined;
+      
+      // Determine category based on the action word
+      let category = 'Other';
+      let type: 'income' | 'expense' = 'expense';
+      
+      for (const [standardCat, patterns] of Object.entries(expenseCategoryPatterns)) {
+        if (patterns.some(p => categoryWord.includes(p))) {
+          category = standardCat;
+          break;
+        }
+      }
+      
+      for (const [standardCat, patterns] of Object.entries(incomeCategoryPatterns)) {
+        if (patterns.some(p => categoryWord.includes(p))) {
+          category = standardCat;
+          type = 'income';
+          break;
+        }
+      }
+      
+      indonesianResult = {
+        description: possibleDescription,
+        amount: possibleAmount,
+        category,
+        type,
+        confidence: 0.8 // High confidence since it matches our pattern
+      };
+    }
+    
     const result: ParsedTransaction = { confidence: 0 };
 
     // Extract amount
@@ -94,21 +143,82 @@ export class TransactionNLP {
       result.confidence += 0.2; // Description helps context
     }
 
-    // Additional processing for Indonesian patterns
-    const indonesianResult = this.processIndonesianPatterns(lowerText);
+    // Use the early-detected Indonesian result if available
     if (indonesianResult) {
-      if (indonesianResult.amount && !result.amount) {
+      if (indonesianResult.amount) {
         result.amount = indonesianResult.amount;
+        result.confidence = Math.max(result.confidence, 0.4);
+      }
+      if (indonesianResult.description) {
+        result.description = indonesianResult.description;
+        result.confidence = Math.max(result.confidence, 0.3);
+      }
+      if (indonesianResult.category) {
+        result.category = indonesianResult.category;
+        result.confidence = Math.max(result.confidence, 0.4);
+      }
+      if (indonesianResult.type) {
+        result.type = indonesianResult.type;
+        result.confidence = Math.max(result.confidence, 0.3);
+      }
+    }
+    
+    // Extract amount (if not already set by Indonesian pattern)
+    if (!result.amount) {
+      const amount = this.extractAmount(lowerText);
+      if (amount) {
+        result.amount = amount;
+        result.confidence += 0.2; // Amount extraction contributes to confidence
+      }
+    }
+    
+    // Extract category (if not already set by Indonesian pattern)
+    if (!result.category) {
+      const { category, type } = this.extractCategory(lowerText, availableCategories);
+      if (category) {
+        result.category = category;
+        result.confidence += 0.3; // Category matching contributes to confidence
+      }
+      if (type) {
+        result.type = type;
+      }
+    }
+    
+    // Extract description (if not already set by Indonesian pattern)
+    if (!result.description) {
+      const description = this.extractDescription(lowerText, result.amount, availableCategories);
+      if (description) {
+        result.description = description;
+        result.confidence += 0.2; // Description helps context
+      }
+    }
+    
+    // Additional processing for Indonesian patterns (for patterns our early detection might have missed)
+    const additionalIndonesianResult = this.processIndonesianPatterns(lowerText);
+    if (additionalIndonesianResult) {
+      if (additionalIndonesianResult.amount && !result.amount) {
+        result.amount = additionalIndonesianResult.amount;
         result.confidence += 0.2;
       }
-      if (indonesianResult.description && !result.description) {
-        result.description = indonesianResult.description;
+      if (additionalIndonesianResult.description && !result.description) {
+        result.description = additionalIndonesianResult.description;
         result.confidence += 0.1;
       }
-      if (indonesianResult.category && !result.category) {
-        result.category = indonesianResult.category;
+      if (additionalIndonesianResult.category && !result.category) {
+        result.category = additionalIndonesianResult.category;
         result.confidence += 0.2;
       }
+    }
+    
+    // Post-process: Ensure amount is not in description if both are present
+    if (result.amount && result.description && result.description.toString().includes(result.amount.toString())) {
+      // Remove the amount from the description
+      const amountStr = result.amount.toString();
+      let description = result.description.toString();
+      description = description.replace(new RegExp(`\\b${amountStr}\\b`, 'g'), '').trim();
+      // Clean up any extra spaces
+      description = description.replace(/\s+/g, ' ').trim();
+      result.description = description || undefined;
     }
 
     // Calculate more nuanced confidence based on multiple factors
@@ -284,6 +394,73 @@ export class TransactionNLP {
           amount: isNaN(amount) ? undefined : amount,
           category: 'Food',
           type: 'expense'
+        };
+      }
+    }
+
+    // General patterns for "category description amount" format
+    for (const pattern of GENERAL_PATTERNS) {
+      const match = text.match(pattern);
+      if (match) {
+        const categoryWord = match[1].toLowerCase();
+        let description = match[2] || categoryWord;
+        const amountStr = match[3];
+        const amount = parseFloat(amountStr.replace(/[^\\d]/g, ''));
+        
+        // Extract the specific food item from description if category word is generic
+        if (categoryWord === 'makan' || categoryWord === 'food' || expenseCategoryPatterns['Food'].includes(categoryWord)) {
+          // Look for food items in the description
+          const words = description.split(' ');
+          for (const word of words) {
+            for (const [standardCat, patterns] of Object.entries(expenseCategoryPatterns)) {
+              for (const pattern of patterns) {
+                if (word.toLowerCase().includes(pattern) && standardCat === 'Food') {
+                  description = word;
+                  break;
+                }
+              }
+            }
+          }
+        }
+        
+        // Map category word to standard category
+        let category = 'Other';
+        let type: 'income' | 'expense' = 'expense';
+        
+        // Check if it matches food categories
+        for (const [standardCat, patterns] of Object.entries(expenseCategoryPatterns)) {
+          for (const pattern of patterns) {
+            if (categoryWord.includes(pattern)) {
+              category = standardCat;
+              break;
+            }
+          }
+        }
+        
+        // Check if it matches income categories
+        for (const [standardCat, patterns] of Object.entries(incomeCategoryPatterns)) {
+          for (const pattern of patterns) {
+            if (categoryWord.includes(pattern)) {
+              category = standardCat;
+              type = 'income';
+              break;
+            }
+          }
+        }
+        
+        // If description still contains the amount, remove it
+        const amountStrClean = amountStr.replace(/[^\\d]/g, '');
+        if (description.includes(amountStrClean)) {
+          description = description.replace(new RegExp(`\\b${amountStrClean}\\b`, 'g'), '').trim();
+          // Clean up any extra spaces
+          description = description.replace(/\s+/g, ' ').trim();
+        }
+        
+        return {
+          description: description.trim(),
+          amount: isNaN(amount) ? undefined : amount,
+          category,
+          type
         };
       }
     }
