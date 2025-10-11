@@ -64,6 +64,9 @@ Common Indonesian Transaction Patterns Supported:
 - "makan nasi gudeg 25000" → Category: Food, Amount: 25000, Description: nasi gudeg
 - "isi pulsa 50000" → Category: Utilities, Amount: 50000, Description: pulsa
 - "beli buku 125000" → Category: Shopping, Amount: 125000, Description: buku
+- "makan sop sapi 23000" → Category: Food, Amount: 23000, Description: sop sapi (improved amount extraction)
+- "makan nasi gudeg" → Category: Food, Description: nasi gudeg (no amount case) 
+- "makan nasi sop 25000" → Category: Food, Amount: 25000, Description: nasi sop (preserved food words in description)
 
 ## Known Issues (if applicable)
 N/A

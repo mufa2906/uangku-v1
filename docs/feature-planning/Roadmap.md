@@ -29,9 +29,17 @@ Empower users to take control of their finances with simple, intuitive tools tha
 
 ## Current Focus (Q4 2025)
 🔄 **Platform Experience**
-- Progressive Web App (PWA) implementation
 - Enhanced accessibility features
 - (Offline functionality temporarily deferred)
+
+## Recently Completed Features
+✅ **Enhanced User Experience**
+- Real-time form validation with immediate feedback
+- Automatic form clearing after successful transaction creation
+- Simplified transaction cards with period-based grouping
+- Improved transaction form field ordering
+- Enhanced AI transaction parsing with better Indonesian pattern recognition
+- Fixed PWA icon loading issues
 
 ## Future Enhancements (2026)
 🗓️ **Advanced Features**

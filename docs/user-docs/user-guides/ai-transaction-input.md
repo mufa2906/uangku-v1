@@ -39,6 +39,9 @@ The AI recognizes various patterns including:
 - "isi pulsa 50000" → Category: Utilities, Amount: 50000, Description: pulsa
 - "beli buku 125000" → Category: Shopping, Amount: 125000, Description: buku
 - "transport gojek 35000" → Category: Transportation, Amount: 35000, Description: gojek
+- "makan sop sapi 23000" → Category: Food, Amount: 23000, Description: sop sapi (improved amount parsing)
+- "makan nasi ayam 15000" → Category: Food, Amount: 15000, Description: nasi ayam (preserved food words)
+- "beli baju 150000" → Category: Shopping, Amount: 150000, Description: baju
 
 **English Patterns:**
 - "bought coffee 25000" → Category: Food, Amount: 25000, Description: coffee
@@ -54,11 +57,12 @@ The AI recognizes various patterns including:
 ## Transaction Processing
 
 ### AI Parsing Process
-1. **Text Analysis**: The system analyzes your input for keywords and amounts
-2. **Category Matching**: Matches description to your existing categories
-3. **Amount Extraction**: Identifies numerical values as transaction amounts
-4. **Form Population**: Automatically fills transaction form fields
-5. **User Review**: You review and confirm the parsed information
+1. **Text Analysis**: The system analyzes your input for keywords and amounts with improved pattern recognition
+2. **Category Matching**: Matches description to your existing categories with enhanced Indonesian language support
+3. **Amount Extraction**: Identifies numerical values as transaction amounts with better accuracy (no more partial number detection)
+4. **Description Preservation**: Preserves meaningful words in descriptions (e.g., "nasi" in "makan nasi gudeg")
+5. **Form Population**: Automatically fills transaction form fields with parsed information
+6. **User Review**: You review and confirm the parsed information
 
 ### Verification Steps
 After AI processing:
@@ -82,6 +86,9 @@ After AI processing:
 - Be specific with merchant/service names
 - Use Indonesian terms for Indonesian transactions
 - The system gets better with more usage
+- Include full descriptions (e.g., "makan nasi gudeg" instead of just "makan gudeg")
+- Place amounts at the end of your phrases for better recognition
+- Use common transaction verbs (makan, beli, isi, transport) for better categorization
 
 ### When to Use Standard Input
 - For complex transactions with multiple components

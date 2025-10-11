@@ -1,5 +1,34 @@
 # Uangku - Changelog
 
+## v1.4.0 - Enhanced User Experience & AI Improvements (October 2025)
+
+### Added
+- **Real-Time Form Validation**: Client-side validation with immediate feedback as users type
+- **Form Clearing After Success**: Transaction form automatically clears after successful submission
+- **Period-Based Transaction Grouping**: Group transactions by daily, weekly, or monthly periods with total calculation
+- **Transaction Form Field Reordering**: Improved field sequence for logical transaction entry flow
+- **AI Parsing Enhancements**: Better accuracy for Indonesian transaction patterns with preserved description words
+- **Dropdown Period Selection**: Improved UI with dropdown for period view selection
+- **Enhanced Transaction Sorting**: Proper sorting using createdAt timestamp for more precise ordering
+- **Improved AI Amount Extraction**: Fixed partial number detection for more accurate amount parsing
+
+### Changed
+- **Transaction Card Design**: Simplified cards to show only essential information (category, notes, price)
+- **Period View Controls**: Replaced button row with dropdown selection for better UX
+- **Transaction Sorting Logic**: Now uses createdAt instead of date for more precise ordering
+- **AI Parsing Flow**: Enhanced pattern detection that preserves food-related words in descriptions (e.g., "nasi" in "makan nasi gudeg")
+- **Form Validation**: Added comprehensive validation with real-time feedback and error messages
+- **Modal Scrolling**: Fixed AI input overflow issues with proper scrolling behavior
+- **Dropdown UI**: Improved period selection with select dropdown instead of multiple buttons
+
+### Fixed
+- **AI Parsing Issues**: Fixed "makan sop sapi 23000" to extract full amount (23000) instead of partial (230)
+- **Description Preservation**: Fixed "makan nasi gudeg" to preserve "nasi gudeg" in description instead of just "gudeg"
+- **Transaction Sorting**: Fixed transaction ordering to properly show newest first within groups
+- **Amount In Description**: Fixed issue where extracted amounts remained in transaction descriptions
+- **PWA Icon Loading**: Verified proper icon placement and referencing in manifest
+- **Form Error Handling**: Added proper validation error display and form state management
+
 ## v1.3.0 - Comprehensive Financial Management (October 2025)
 
 ### Added
