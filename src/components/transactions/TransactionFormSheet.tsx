@@ -145,10 +145,16 @@ export default function TransactionFormSheet({
         date: new Date(formData.date).toISOString(),
       };
 
+      // Check if we're online
+      // Always submit to server directly
       await onSubmit(submitData);
       onOpenChange(false);
     } catch (error) {
       console.error('Error submitting transaction:', error);
+      addToast(toast.error(
+        'Submission Error',
+        'There was an error saving your transaction. Please try again.'
+      ));
     } finally {
       setIsSubmitting(false);
     }
