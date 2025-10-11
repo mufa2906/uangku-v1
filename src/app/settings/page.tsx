@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { Check } from 'lucide-react';
 import AppBottomNav from '@/components/shells/AppBottomNav';
+import PWASettings from '@/components/settings/PWASettings';
 
 // Supported currencies
 const SUPPORTED_CURRENCIES = [
@@ -35,6 +36,11 @@ export default function SettingsPage() {
       <div className="p-4 max-w-4xl mx-auto">
         <div className="flex items-center mb-6">
           <h1 className="text-2xl font-bold flex-1">Settings</h1>
+        </div>
+
+        {/* PWA Settings */}
+        <div className="mb-6">
+          <PWASettings />
         </div>
 
         {/* Currency Settings */}

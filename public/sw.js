@@ -14,8 +14,21 @@ const ASSETS_TO_CACHE = [
   '/profile',
   '/settings',
   '/manifest.json',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png',
   '/icons/icon-192x192.svg',
   '/icons/icon-512x512.svg',
+];
+
+// API endpoints to cache for offline functionality
+const API_ENDPOINTS = [
+  '/api/transactions',
+  '/api/wallets',
+  '/api/categories',
+  '/api/budgets',
+  '/api/goals',
+  '/api/bills',
+  '/api/insights',
 ];
 
 self.addEventListener('install', (event) => {
@@ -118,4 +131,74 @@ self.addEventListener('activate', (event) => {
     })
   );
   return self.clients.claim();
+});
+
+// Push notification support
+self.addEventListener('push', (event) => {
+  console.log('Push event received:', event);
+  
+  let title = 'Uangku Notification';
+  let options = {
+    body: 'You have a new notification',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-192x192.png',
+    tag: 'uangku-notification'
+  };
+  
+  // Handle different types of push notifications
+  if (event.data) {
+    const data = event.data.json();
+    title = data.title || title;
+    options.body = data.body || options.body;
+    options.icon = data.icon || options.icon;
+    options.badge = data.badge || options.badge;
+    options.tag = data.tag || options.tag;
+    
+    // Add click action if provided
+    if (data.url) {
+      options.data = {
+        url: data.url
+      };
+    }
+  }
+  
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
+});
+
+// Handle notification clicks
+self.addEventListener('notificationclick', (event) => {
+  console.log('Notification clicked:', event);
+  
+  event.notification.close();
+  
+  // Redirect to URL if provided
+  let url = '/';
+  if (event.notification.data && event.notification.data.url) {
+    url = event.notification.data.url;
+  }
+  
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then((clientList) => {
+      // If there's already a window open, focus it
+      for (let i = 0; i < clientList.length; i++) {
+        const client = clientList[i];
+        if (client.url === url && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      
+      // If no window is open, open a new one
+      if (clients.openWindow) {
+        return clients.openWindow(url);
+      }
+    })
+  );
+});
+
+// Handle push subscription changes
+self.addEventListener('pushsubscriptionchange', (event) => {
+  console.log('Push subscription changed:', event);
+  // In a real implementation, you would re-subscribe the user to push notifications
 });

@@ -1,5 +1,30 @@
 # Uangku - Changelog
 
+## v1.5.0 - PWA Implementation & Enhanced Notifications (November 2025)
+
+### Added
+- **Progressive Web App (PWA) Support**: Installable app experience with native-like performance
+- **Push Notifications**: Real-time bill reminders and budget warnings
+- **Offline Transaction Entry**: Create transactions even when offline
+- **Background Sync**: Seamless data synchronization when connectivity is restored
+- **PWA Settings Panel**: User-controlled PWA feature management
+- **Install Prompt**: Contextual app installation prompts
+- **Service Worker**: Caching and offline functionality
+- **Web App Manifest**: Proper PWA metadata and icons
+
+### Changed
+- **Enhanced Service Worker**: Improved caching strategies and offline handling
+- **Notification System**: Upgraded to web push notifications
+- **UI Components**: Added PWA-specific indicators and controls
+- **Settings Page**: Integrated PWA management interface
+- **Transaction Flow**: Enhanced offline transaction handling
+
+### Fixed
+- **PWA Installation Issues**: Resolved icon and manifest configuration problems
+- **Notification Delivery**: Improved reliability of push notifications
+- **Offline Sync**: Fixed data synchronization conflicts
+- **Service Worker Registration**: Enhanced reliability and error handling
+
 ## v1.4.0 - Enhanced User Experience & AI Improvements (October 2025)
 
 ### Added

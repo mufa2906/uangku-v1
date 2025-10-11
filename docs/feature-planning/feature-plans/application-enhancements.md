@@ -219,6 +219,11 @@ Manifest should reference them as:
 - Keyboard navigation improvements for all forms
 - Form field customization allowing users to set their preferred field order
 - Conditional field visibility based on transaction type
+- **PWA Improvements**:
+  - Enhanced offline functionality with full offline transaction entry
+  - Push notifications for bill reminders and budget warnings
+  - Background sync for seamless data synchronization
+  - Installable app experience with native-like performance
 
 ## References & Resources
 ### Related Documentation
