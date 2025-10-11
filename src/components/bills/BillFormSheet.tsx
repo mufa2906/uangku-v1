@@ -14,7 +14,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Textarea } from '@/components/ui/textarea';
 import { useUser } from '@clerk/nextjs';
 import { Bill, Category, Wallet } from '@/types';
 import { useToast, toast } from '@/components/ui/toast';
@@ -108,6 +107,7 @@ export default function BillFormSheet({
         nextDueDate: new Date(formData.nextDueDate).toISOString(),
         recurrenceInterval: formData.recurrencePattern !== 'custom' ? undefined : formData.recurrenceInterval,
         notifyDaysBefore: formData.autoNotify ? formData.notifyDaysBefore : '0', // If not auto notify, set to 0
+        recurrencePattern: formData.recurrencePattern || null, // Ensure empty string becomes null
       };
 
       await onSubmit(submissionData);

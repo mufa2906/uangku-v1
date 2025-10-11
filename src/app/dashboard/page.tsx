@@ -13,6 +13,12 @@ import AppBottomNav from '@/components/shells/AppBottomNav';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import BudgetSummary from '@/components/budgets/BudgetSummary';
 
+// Define a type for bill data returned from the API that includes joined fields
+interface BillWithJoins extends Bill {
+  walletName?: string | null;
+  categoryName?: string | null;
+}
+
 interface WeeklyDataPoint {
   date: string;
   income: number;
@@ -40,7 +46,7 @@ export default function DashboardPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]); // Add budgets state
   const [wallets, setWallets] = useState<Wallet[]>([]); // Add wallets state
-  const [bills, setBills] = useState<Bill[]>([]); // Add bills state
+  const [bills, setBills] = useState<BillWithJoins[]>([]); // Add bills state with proper typing
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -320,7 +326,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="text-right">
                           <div className="font-medium">{formatCurrency(parseFloat(bill.amount))}</div>
-                          <div className="text-sm text-gray-500">{bill.walletName || 'Wallet'}</div>
+                          <div className="text-sm text-gray-500">{(bill as BillWithJoins).walletName || 'Wallet'}</div>
                         </div>
                       </div>
                     );

@@ -51,7 +51,8 @@ async function createBillsTable() {
       `);
       console.log('Wallet foreign key constraint added successfully!');
     } catch (error) {
-      console.log('Wallet foreign key constraint already exists or failed:', error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.log('Wallet foreign key constraint already exists or failed:', errorMessage);
     }
     
     try {
@@ -62,11 +63,13 @@ async function createBillsTable() {
       `);
       console.log('Category foreign key constraint added successfully!');
     } catch (error) {
-      console.log('Category foreign key constraint already exists or failed:', error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.log('Category foreign key constraint already exists or failed:', errorMessage);
     }
     
   } catch (error) {
-    console.error('Error creating bills table:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error creating bills table:', errorMessage);
   } finally {
     await client.end();
     process.exit(0);

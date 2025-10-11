@@ -63,7 +63,7 @@ export function BillNotificationProvider({ children }: { children: ReactNode }) 
 
     // Show notifications for bills due today
     billsDueToday.forEach(bill => {
-      addToast(toast.warn(
+      addToast(toast.warning(
         'Bill Due Today',
         `Your ${bill.name} bill is due today!`,
         10000 // Show for 10 seconds

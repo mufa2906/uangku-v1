@@ -25,8 +25,8 @@ export async function GET(request: NextRequest) {
       eq(bills.userId, userId),
       includeInactive ? undefined : eq(bills.isActive, true),
       upcomingOnly ? eq(bills.isPaid, false) : undefined,
-      dueDateFrom ? gte(bills.dueDate, new Date(dueDateFrom)) : undefined,
-      dueDateTo ? lte(bills.dueDate, new Date(dueDateTo)) : undefined,
+      dueDateFrom ? gte(bills.dueDate, dueDateFrom) : undefined,
+      dueDateTo ? lte(bills.dueDate, dueDateTo) : undefined,
     ].filter(Boolean) as any[];
 
     const whereCondition = filters.length > 1 ? and(...filters) : filters[0] || eq(bills.userId, userId);

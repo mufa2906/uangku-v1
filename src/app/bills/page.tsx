@@ -9,19 +9,25 @@ import { FloatingButton } from '@/components/ui/floating-button';
 import { Search, Plus, Calendar, AlertCircle, CheckCircle, Repeat, Clock } from 'lucide-react';
 import BillFormSheet from '@/components/bills/BillFormSheet';
 import AppBottomNav from '@/components/shells/AppBottomNav';
-import { Bill, Category, Wallet } from '@/types';
+import { Bill as BillType, Category, Wallet } from '@/types';
+
+// Define a type for the bill data returned from the API that includes joined fields
+interface BillWithJoins extends BillType {
+  walletName?: string | null;
+  categoryName?: string | null;
+}
 import { useCurrency } from '@/contexts/CurrencyContext';
 
 export default function BillsPage() {
   const { userId } = useAuth();
   const { formatCurrency } = useCurrency();
-  const [bills, setBills] = useState<Bill[]>([]);
+  const [bills, setBills] = useState<BillWithJoins[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingBill, setEditingBill] = useState<Bill | null>(null);
+  const [editingBill, setEditingBill] = useState<BillWithJoins | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -90,7 +96,7 @@ export default function BillsPage() {
     setIsFormOpen(true);
   };
 
-  const handleEditBill = (bill: Bill) => {
+  const handleEditBill = (bill: BillWithJoins) => {
     setEditingBill(bill);
     setIsFormOpen(true);
   };
@@ -114,7 +120,7 @@ export default function BillsPage() {
     }
   };
 
-  const handleSubmitBill = async (data: Partial<Bill>) => {
+  const handleSubmitBill = async (data: Partial<BillType>) => {
     try {
       let response;
       
@@ -158,12 +164,10 @@ export default function BillsPage() {
     }
   };
 
-  // Filter bills based on search term
+  // Filter bills based on search term - we need to handle the joined fields properly
   const filteredBills = bills.filter(bill => 
     bill.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    bill.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (bill.categoryName && bill.categoryName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (bill.walletName && bill.walletName.toLowerCase().includes(searchTerm.toLowerCase()))
+    bill.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Get upcoming bills (due within 7 days)

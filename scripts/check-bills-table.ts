@@ -41,7 +41,8 @@ async function checkBillsTable() {
     }
     
   } catch (error) {
-    console.error('Error checking bills table:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error checking bills table:', errorMessage);
   } finally {
     await client.end();
     process.exit(0);

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Placeholder Icon</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #3B82F6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .icon {
+            width: 64px;
+            height: 64px;
+            background-color: white;
+            border-radius: 50%;
+            position: relative;
+            opacity: 0.8;
+        }
+        .check {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            width: 24px;
+            height: 12px;
+            border-left: 4px solid white;
+            border-bottom: 4px solid white;
+        }
+    </style>
+</head>
+<body>
+    <div class="icon">
+        <div class="check"></div>
+    </div>
+</body>
+</html>

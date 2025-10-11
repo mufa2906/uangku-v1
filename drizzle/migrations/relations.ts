@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { budgets, transactions, categories, wallets, bills } from "./schema";
+import { budgets, transactions, categories, wallets, bills } from "../../src/lib/schema";
 
 export const transactionsRelations = relations(transactions, ({one}) => ({
 	budget: one(budgets, {
