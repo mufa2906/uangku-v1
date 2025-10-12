@@ -11,6 +11,9 @@
 - **Install Prompt**: Contextual app installation prompts
 - **Service Worker**: Caching and offline functionality
 - **Web App Manifest**: Proper PWA metadata and icons
+- **Enhanced Offline Mode**: Dedicated `/offline` page for offline transaction creation
+- **Offline Storage**: IndexedDB/localStorage for persistent offline data
+- **Connection Detection**: Real-time online/offline status monitoring
 
 ### Changed
 - **Enhanced Service Worker**: Improved caching strategies and offline handling
@@ -18,12 +21,15 @@
 - **UI Components**: Added PWA-specific indicators and controls
 - **Settings Page**: Integrated PWA management interface
 - **Transaction Flow**: Enhanced offline transaction handling
+- **Offline Experience**: Dedicated offline page for transaction creation when disconnected
 
 ### Fixed
 - **PWA Installation Issues**: Resolved icon and manifest configuration problems
 - **Notification Delivery**: Improved reliability of push notifications
 - **Offline Sync**: Fixed data synchronization conflicts
 - **Service Worker Registration**: Enhanced reliability and error handling
+- **Offline Transaction Validation**: Added proper validation for offline transactions
+- **Data Persistence**: Ensured no data loss during offline/online transitions
 
 ## v1.4.0 - Enhanced User Experience & AI Improvements (October 2025)
 

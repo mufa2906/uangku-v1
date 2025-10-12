@@ -4,7 +4,7 @@ import { Transaction } from '@/types';
 // Define the structure for offline transaction data
 interface OfflineTransaction {
   id: string; // Local ID for offline storage
-  transactionData: Partial<Omit<Transaction, 'id'>>; // Partial transaction data without server ID
+  transactionData: any; // Partial transaction data without server ID
   createdAt: string; // Timestamp when added offline
   synced: boolean; // Whether it has been synced to server
 }
@@ -17,7 +17,7 @@ const isBrowser = typeof window !== 'undefined';
 
 export class OfflineStorage {
   // Add a transaction to offline storage
-  static addOfflineTransaction(transaction: Partial<Omit<Transaction, 'id'>>): string {
+  static addOfflineTransaction(transaction: any): string {
     // Only run in browser environment
     if (!isBrowser) return '';
     
@@ -58,13 +58,29 @@ export class OfflineStorage {
     }
   }
 
+  // Get all offline transactions (including synced ones for display)
+  static getAllOfflineTransactions(): OfflineTransaction[] {
+    // Only run in browser environment
+    if (!isBrowser) return [];
+    
+    try {
+      const stored = localStorage.getItem(OFFLINE_TRANSACTIONS_KEY);
+      if (!stored) return [];
+      
+      return JSON.parse(stored);
+    } catch (error) {
+      console.error('Error reading all offline transactions:', error);
+      return [];
+    }
+  }
+
   // Mark a transaction as synced
   static markAsSynced(localId: string, serverId?: string): boolean {
     // Only run in browser environment
     if (!isBrowser) return false;
     
     try {
-      const offlineTransactions = this.getOfflineTransactions();
+      const offlineTransactions = this.getAllOfflineTransactions();
       const transactionIndex = offlineTransactions.findIndex(t => t.id === localId);
       
       if (transactionIndex !== -1) {
@@ -72,7 +88,7 @@ export class OfflineStorage {
         const updatedTransaction = { ...offlineTransactions[transactionIndex] };
         
         if (serverId) {
-          // Update the ID to the server ID
+          // Update the ID to the server ID if provided
           updatedTransaction.id = serverId;
         }
         
@@ -120,5 +136,17 @@ export class OfflineStorage {
     if (!isBrowser) return 0;
     
     return this.getOfflineTransactions().length;
+  }
+
+  // Clear all offline transactions (useful for testing)
+  static clearAll(): void {
+    // Only run in browser environment
+    if (!isBrowser) return;
+    
+    try {
+      localStorage.removeItem(OFFLINE_TRANSACTIONS_KEY);
+    } catch (error) {
+      console.error('Error clearing offline transactions:', error);
+    }
   }
 }

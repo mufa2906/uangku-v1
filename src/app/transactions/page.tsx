@@ -10,6 +10,8 @@ import TransactionFormSheet from '@/components/transactions/TransactionFormSheet
 import AppBottomNav from '@/components/shells/AppBottomNav';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { Button } from '@/components/ui/button';
+import { usePWA } from '@/contexts/PWAContext';
+import { useOfflineSync } from '@/hooks/useOfflineSync'; // Add this import
 
 // Define the API response type
 type TransactionApiResponse = {
@@ -36,6 +38,8 @@ type GroupedTransaction = {
 export default function TransactionsPage() {
   const { userId } = useAuth();
   const { formatCurrency } = useCurrency();
+  const { isOnline } = usePWA(); // PWA context for online status
+  const { pendingTransactions, syncPendingTransactions } = useOfflineSync(); // Offline sync hook
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -53,6 +57,13 @@ export default function TransactionsPage() {
       fetchTransactionsAndCategories();
     }
   }, [userId]);
+
+  // Auto-sync when coming back online
+  useEffect(() => {
+    if (isOnline && pendingTransactions > 0) {
+      syncPendingTransactions();
+    }
+  }, [isOnline, pendingTransactions, syncPendingTransactions]);
 
   const fetchTransactionsAndCategories = async () => {
     try {

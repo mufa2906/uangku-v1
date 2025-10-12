@@ -4,6 +4,7 @@
 const CACHE_NAME = 'uangku-v1';
 const ASSETS_TO_CACHE = [
   '/',
+  '/offline',
   '/dashboard',
   '/transactions',
   '/wallets',
@@ -45,36 +46,8 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Handle dynamic Next.js chunks - cache them for offline access
-  if (event.request.url.includes('_next/static/chunks')) {
-    event.respondWith(
-      caches.match(event.request)
-        .then((response) => {
-          // If cache hit, return cached response
-          if (response) {
-            return response;
-          }
-          // Otherwise fetch from network and cache it
-          return fetch(event.request)
-            .then((networkResponse) => {
-              // Clone the response to store in cache
-              const responseToCache = networkResponse.clone();
-              caches.open(CACHE_NAME)
-                .then((cache) => {
-                  cache.put(event.request, responseToCache);
-                });
-              return networkResponse;
-            })
-            .catch(() => {
-              // If both cache and network fail, return error
-              console.error('Failed to fetch chunk:', event.request.url);
-              return new Response('Error loading chunk', { status: 500 });
-            });
-        })
-    );
-  }
   // Handle API requests specially - only cache successful responses
-  else if (event.request.url.includes('/api/')) {
+  if (event.request.url.includes('/api/')) {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
@@ -93,7 +66,73 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => {
           // If the network request fails, try to get from cache
-          return caches.match(event.request);
+          return caches.match(event.request)
+            .then((cachedResponse) => {
+              if (cachedResponse) {
+                return cachedResponse;
+              }
+              
+              // For API requests that fail, return offline mode response
+              if (event.request.url.includes('/api/')) {
+                return new Response(
+                  JSON.stringify({ 
+                    error: 'OFFLINE', 
+                    message: 'Currently in offline mode. Data will sync when online.',
+                    offline: true 
+                  }), 
+                  { 
+                    status: 200, 
+                    headers: { 'Content-Type': 'application/json' } 
+                  }
+                );
+              }
+              
+              // Generic offline response
+              return new Response(
+                JSON.stringify({ error: 'OFFLINE', message: 'No internet connection' }), 
+                { status: 503, headers: { 'Content-Type': 'application/json' } }
+              );
+            });
+        })
+    );
+  } 
+// Handle document requests (pages) - serve offline page when offline
+  else if (event.request.destination === 'document') {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => {
+          // For authenticated pages that fail, serve offline page
+          if (event.request.url.includes('/api/') || 
+              event.request.url.includes('/dashboard') ||
+              event.request.url.includes('/transactions') ||
+              event.request.url.includes('/wallets') ||
+              event.request.url.includes('/bills') ||
+              event.request.url.includes('/budgets') ||
+              event.request.url.includes('/goals') ||
+              event.request.url.includes('/categories') ||
+              event.request.url.includes('/profile') ||
+              event.request.url.includes('/settings')) {
+            // Try to serve the offline page
+            return caches.match('/offline')
+              .then((response) => {
+                // If offline page is cached, serve it
+                if (response) {
+                  return response;
+                }
+                // Fallback to simple offline HTML
+                return caches.match('/offline.html')
+                  .then(fallbackResponse => fallbackResponse || new Response(
+                    '<!DOCTYPE html><html><head><title>Offline</title></head><body><h1>You are offline</h1><p>Please check your connection and try again.</p></body></html>',
+                    { headers: { 'Content-Type': 'text/html' } }
+                  ));
+              });
+          }
+          
+          // For other document requests, try cache first
+          return caches.match(event.request)
+            .then((response) => {
+              return response || caches.match('/');
+            });
         })
     );
   } else {

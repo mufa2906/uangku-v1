@@ -47,6 +47,9 @@ Empower users to take control of their finances with simple, intuitive tools tha
 - Offline transaction entry with background sync capabilities
 - Service worker implementation with intelligent caching
 - Web app manifest with proper icons and metadata
+- Enhanced offline mode with dedicated transaction page
+- Connection status monitoring and automatic sync
+- Install prompt with contextual triggering
 
 ## Future Enhancements (2026)
 🗓️ **Advanced Features**
