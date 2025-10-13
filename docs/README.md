@@ -51,6 +51,9 @@ The application has completed all core functionality. Current development priori
 - Budget-centric default view
 - Enhanced period-based analytics
 
+### 🗓️ Planned Features
+- Authentication migration (Clerk to BetterAuth for reduced third-party dependencies)
+
 ### 🗓️ Future Features
 - Expense forecasting and prediction
 - Bank account integration

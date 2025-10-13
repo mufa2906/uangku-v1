@@ -22,6 +22,7 @@
 - `/feature-plans/` - Individual feature specifications:
   - `application-enhancements.md` - Application improvements and bug fixes
   - `application-enhancements-v2.md` - Enhanced application improvements and UX enhancements
+  - `authentication-migration.md` - Authentication system migration (Clerk to BetterAuth)
   - `budgeting-tools.md` - Budgeting system implementation
   - `currency-support.md` - Multi-currency implementation
   - `ai-text-input.md` - AI transaction input implementation
