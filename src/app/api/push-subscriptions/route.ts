@@ -2,12 +2,19 @@
 // API route for managing push notification subscriptions
 
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth';
 
 // POST /api/push-subscriptions - Save push subscription
 export async function POST(request: Request) {
   try {
-    const { userId } = auth();
+    // Use BetterAuth instead of Clerk
+    const session = await auth.api.getSession({
+      headers: {
+        cookie: request.headers.get('cookie') || '',
+      },
+    });
+    
+    const userId = session?.user?.id;
     
     if (!userId) {
       return NextResponse.json(
@@ -57,7 +64,14 @@ export async function POST(request: Request) {
 // DELETE /api/push-subscriptions - Remove push subscription
 export async function DELETE(request: Request) {
   try {
-    const { userId } = auth();
+    // Use BetterAuth instead of Clerk
+    const session = await auth.api.getSession({
+      headers: {
+        cookie: request.headers.get('cookie') || '',
+      },
+    });
+    
+    const userId = session?.user?.id;
     
     if (!userId) {
       return NextResponse.json(
@@ -105,7 +119,14 @@ export async function DELETE(request: Request) {
 // GET /api/push-subscriptions - Get user's push subscriptions
 export async function GET() {
   try {
-    const { userId } = auth();
+    // Use BetterAuth instead of Clerk
+    const session = await auth.api.getSession({
+      headers: {
+        cookie: request.headers.get('cookie') || '',
+      },
+    });
+    
+    const userId = session?.user?.id;
     
     if (!userId) {
       return NextResponse.json(

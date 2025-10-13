@@ -1,13 +1,5 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
- 
-const isPublicRoute = createRouteMatcher(["/", "/sign-in", "/sign-up", "/offline", "/sw.js", "/manifest.json", "/icons/(.*)"]);
- 
-export default clerkMiddleware((auth, request) => {
-  if (!isPublicRoute(request)) {
-    auth().protect();
-  }
-});
- 
-export const config = {
-  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
-};
+import { betterAuthMiddleware } from '@/lib/auth/middleware';
+
+export default betterAuthMiddleware;
+
+export { config } from '@/lib/auth/middleware';

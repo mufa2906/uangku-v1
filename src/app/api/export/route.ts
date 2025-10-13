@@ -2,12 +2,19 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { transactions, categories, budgets, wallets } from '@/lib/schema';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth';
 import { and, eq, desc, gte, lte } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = auth();
+    // Use BetterAuth instead of Clerk
+    const session = await auth.api.getSession({
+      headers: {
+        cookie: request.headers.get('cookie') || '',
+      },
+    });
+    
+    const userId = session?.user?.id;
     
     if (!userId) {
       return new Response('Unauthorized', { status: 401 });

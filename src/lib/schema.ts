@@ -1,10 +1,67 @@
 // src/lib/schema.ts
-import { pgTable, varchar, timestamp, text, uuid, numeric, pgEnum, date, boolean } from "drizzle-orm/pg-core";
+import { pgTable, varchar, timestamp, text, uuid, numeric, pgEnum, date, boolean, primaryKey, integer } from "drizzle-orm/pg-core";
 
 export const trxType = pgEnum("trx_type", ["income", "expense"]);
 export const budgetPeriod = pgEnum("budget_period", ["weekly", "monthly", "yearly"]);
 export const walletType = pgEnum("wallet_type", ["cash", "bank", "credit_card", "e_wallet", "savings"]);
 export const goalStatus = pgEnum("goal_status", ["active", "paused", "completed", "cancelled"]);
+
+// BetterAuth tables
+export const users = pgTable("users", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 255 }),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  emailVerified: boolean("email_verified").default(false),
+  image: varchar("image", { length: 255 }),
+  password: varchar("password", { length: 255 }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
+export const accounts = pgTable("accounts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  providerId: varchar("provider_id", { length: 50 }).notNull(), // 'google', 'github', etc.
+  providerAccountId: varchar("provider_account_id", { length: 255 }).notNull(),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  expiresAt: integer("expires_at"),
+  tokenType: varchar("token_type", { length: 50 }),
+  scope: varchar("scope", { length: 255 }),
+  idToken: text("id_token"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  
+}, (table) => {
+  return {
+    compoundKey: primaryKey({ columns: [table.providerId, table.providerAccountId] }),
+  };
+});
+
+export const sessions = pgTable("sessions", {
+  id: varchar("id", { length: 255 }).primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
+export const verificationTokens = pgTable("verification_tokens", {
+  identifier: varchar("identifier", { length: 255 }).notNull(),
+  token: varchar("token", { length: 255 }).notNull(),
+  expires: timestamp("expires", { withTimezone: true }).notNull(),
+  
+}, (table) => {
+  return {
+    compoundKey: primaryKey({ columns: [table.identifier, table.token] }),
+  };
+});
 
 export const categories = pgTable("categories", {
   id: uuid("id").primaryKey().defaultRandom(),

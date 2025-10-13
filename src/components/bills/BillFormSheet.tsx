@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@/hooks/useAuth';
 import { Bill, Category, Wallet } from '@/types';
 import { useToast, toast } from '@/components/ui/toast';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -36,7 +36,7 @@ export default function BillFormSheet({
   categories,
   wallets
 }: BillFormSheetProps) {
-  const { user } = useUser();
+  const { user } = useAuth();
   const { currency, formatCurrency } = useCurrency();
   const { addToast } = useToast();
   const [formData, setFormData] = useState({

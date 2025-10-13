@@ -2,13 +2,20 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { categories, transactions } from '@/lib/schema';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth';
 import { eq, and, count, not } from 'drizzle-orm';
 import { UpdateCategorySchema } from '@/lib/zod';
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { userId } = auth();
+    // Use BetterAuth instead of Clerk
+    const session = await auth.api.getSession({
+      headers: {
+        cookie: request.headers.get('cookie') || '',
+      },
+    });
+    
+    const userId = session?.user?.id;
     
     if (!userId) {
       return new Response('Unauthorized', { status: 401 });
@@ -111,7 +118,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { userId } = auth();
+    // Use BetterAuth instead of Clerk
+    const session = await auth.api.getSession({
+      headers: {
+        cookie: request.headers.get('cookie') || '',
+      },
+    });
+    
+    const userId = session?.user?.id;
     
     if (!userId) {
       return new Response('Unauthorized', { status: 401 });

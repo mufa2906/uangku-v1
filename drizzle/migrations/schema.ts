@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, numeric, boolean, timestamp, text, foreignKey, date, pgEnum } from "drizzle-orm/pg-core"
+import { pgTable, uuid, varchar, numeric, boolean, timestamp, text, foreignKey, date, pgEnum, primaryKey, integer } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const budgetPeriod = pgEnum("budget_period", ['weekly', 'monthly', 'yearly'])
@@ -81,4 +81,62 @@ export const budgets = pgTable("budgets", {
 			foreignColumns: [wallets.id],
 			name: "budgets_wallet_id_fkey"
 		}).onDelete("cascade"),
+]);
+
+// BetterAuth tables
+export const users = pgTable("users", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	name: varchar({ length: 255 }),
+	email: varchar({ length: 255 }).notNull(),
+	emailVerified: boolean("email_verified").default(false),
+	image: varchar({ length: 255 }),
+	password: varchar({ length: 255 }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+});
+
+export const accounts = pgTable("accounts", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	userId: uuid("user_id").notNull(),
+	providerId: varchar("provider_id", { length: 50 }).notNull(),
+	providerAccountId: varchar("provider_account_id", { length: 255 }).notNull(),
+	accessToken: text("access_token"),
+	refreshToken: text("refresh_token"),
+	expiresAt: integer("expires_at"),
+	tokenType: varchar("token_type", { length: 50 }),
+	scope: varchar("scope", { length: 255 }),
+	idToken: text("id_token"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+}, (table) => [
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [users.id],
+			name: "accounts_user_id_users_id_fk"
+		}).onDelete("cascade"),
+	primaryKey({ columns: [table.providerId, table.providerAccountId] }),
+]);
+
+export const sessions = pgTable("sessions", {
+	id: varchar({ length: 255 }).primaryKey().notNull(),
+	userId: uuid("user_id").notNull(),
+	expiresAt: timestamp("expires_at", { withTimezone: true, mode: 'string' }).notNull(),
+	ipAddress: varchar("ip_address", { length: 45 }),
+	userAgent: text("user_agent"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+}, (table) => [
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [users.id],
+			name: "sessions_user_id_users_id_fk"
+		}).onDelete("cascade"),
+]);
+
+export const verificationTokens = pgTable("verification_tokens", {
+	identifier: varchar({ length: 255 }).notNull(),
+	token: varchar({ length: 255 }).notNull(),
+	expires: timestamp("expires", { withTimezone: true, mode: 'string' }).notNull(),
+}, (table) => [
+	primaryKey({ columns: [table.identifier, table.token] }),
 ]);

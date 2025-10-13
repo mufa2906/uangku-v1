@@ -29,6 +29,13 @@
       "when": 1759760700000,
       "tag": "0003_bill_reminders",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1759760800000,
+      "tag": "0004_better_auth_tables",
+      "breakpoints": true
     }
   ]
 }

@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@/hooks/useAuth';
 import { Transaction, Category, Budget, Wallet } from '@/types';
 import { useToast, toast } from '@/components/ui/toast';
 import AiTransactionInput from '@/components/transactions/AiTransactionInput';
@@ -42,7 +42,7 @@ export default function TransactionFormSheet({
   budgets,
   wallets
 }: TransactionFormSheetProps) {
-  const { user } = useUser();
+  const { user } = useAuth();
   const { addToast } = useToast();
   const [formData, setFormData] = useState({
     walletId: '',

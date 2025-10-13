@@ -2,7 +2,7 @@
 // API route for handling offline transaction sync
 
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { transactions, wallets, budgets, categories } from '@/lib/schema';
 import { and, eq, sql } from 'drizzle-orm';
@@ -11,7 +11,14 @@ import { CreateTransactionSchema } from '@/lib/zod';
 // POST /api/offline-transactions - Sync offline transactions
 export async function POST(request: Request) {
   try {
-    const { userId } = auth();
+    // Use BetterAuth instead of Clerk
+    const session = await auth.api.getSession({
+      headers: {
+        cookie: request.headers.get('cookie') || '',
+      },
+    });
+    
+    const userId = session?.user?.id;
     
     if (!userId) {
       return NextResponse.json(

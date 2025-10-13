@@ -2,12 +2,19 @@
 // API route for sending test notifications
 
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth';
 
 // POST /api/notifications/send-test - Send test notification
 export async function POST(request: Request) {
   try {
-    const { userId } = auth();
+    // Use BetterAuth instead of Clerk
+    const session = await auth.api.getSession({
+      headers: {
+        cookie: request.headers.get('cookie') || '',
+      },
+    });
+    
+    const userId = session?.user?.id;
     
     if (!userId) {
       return NextResponse.json(

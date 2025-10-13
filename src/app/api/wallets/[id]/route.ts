@@ -2,7 +2,7 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { wallets } from '@/lib/schema';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth';
 import { eq } from 'drizzle-orm';
 import { UpdateWalletSchema } from '@/lib/zod';
 
@@ -11,7 +11,14 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { userId } = auth();
+    // Use BetterAuth instead of Clerk
+    const session = await auth.api.getSession({
+      headers: {
+        cookie: request.headers.get('cookie') || '',
+      },
+    });
+    
+    const userId = session?.user?.id;
     const { id } = params;
     
     if (!userId) {
@@ -45,7 +52,14 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { userId } = auth();
+    // Use BetterAuth instead of Clerk
+    const session = await auth.api.getSession({
+      headers: {
+        cookie: request.headers.get('cookie') || '',
+      },
+    });
+    
+    const userId = session?.user?.id;
     const { id } = params;
     
     if (!userId) {
@@ -99,7 +113,14 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { userId } = auth();
+    // Use BetterAuth instead of Clerk
+    const session = await auth.api.getSession({
+      headers: {
+        cookie: request.headers.get('cookie') || '',
+      },
+    });
+    
+    const userId = session?.user?.id;
     const { id } = params;
     
     if (!userId) {

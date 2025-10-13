@@ -1,7 +1,7 @@
 // src/app/profile/page.tsx
 'use client';
 
-import { useUser, useClerk } from '@clerk/nextjs';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
@@ -12,8 +12,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import AppBottomNav from '@/components/shells/AppBottomNav';
 
 export default function ProfilePage() {
-  const { user } = useUser();
-  const { signOut } = useClerk();
+  const { user, signOut } = useAuth();
   const { currencySymbol } = useCurrency();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 

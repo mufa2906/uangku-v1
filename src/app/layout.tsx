@@ -2,7 +2,6 @@ import './globals.css'
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { Providers } from './providers'
-import { ThemeProvider } from 'next-themes'
 import LayoutWrapper from './layout-wrapper'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -25,11 +24,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <Providers>
-            <LayoutWrapper>{children}</LayoutWrapper>
-          </Providers>
-        </ThemeProvider>
+        <Providers>
+          <LayoutWrapper>{children}</LayoutWrapper>
+        </Providers>
       </body>
     </html>
   )

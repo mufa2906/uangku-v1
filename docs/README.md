@@ -42,16 +42,6 @@ The application has completed all core functionality. Current development priori
 - Logout functionality with confirmation dialog
 - Navigation enhancement (centralized access in Profile page)
 - PWA implementation (offline capabilities and push notifications)
-
-### 🔄 In Progress Features
-- Enhanced accessibility features
-- Dashboard budget summary improvements
-- Color contrast enhancements for outdoor use
-- Budget-based transaction filtering
-- Budget-centric default view
-- Enhanced period-based analytics
-
-### 🗓️ Planned Features
 - Authentication migration (Clerk to BetterAuth for reduced third-party dependencies)
 
 ### 🗓️ Future Features

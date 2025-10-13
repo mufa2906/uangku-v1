@@ -43,7 +43,8 @@
 - **Data export**: Export your transactions to various formats for external analysis
 
 ### 🔐 Secure & Private
-- **Industry-standard authentication**: Powered by Clerk for secure login
+- **Industry-standard authentication**: Powered by BetterAuth for secure login
+- **Self-hosted authentication**: No dependency on third-party authentication services
 - **Personal data protection**: Your financial data stays private and secure
 - **No sharing**: We don't share your data with third parties
 
@@ -120,7 +121,7 @@ Uangku is built with cutting-edge technology:
 
 - **Frontend**: Next.js (App Router) with TypeScript
 - **Styling**: TailwindCSS and shadcn/ui for beautiful components
-- **Authentication**: Clerk for secure user management
+- **Authentication**: BetterAuth for secure self-hosted user management
 - **Database**: Supabase PostgreSQL with Drizzle ORM
 - **Charts**: Recharts for data visualization
 - **Deployment**: Vercel for fast global delivery

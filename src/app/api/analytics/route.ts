@@ -2,7 +2,7 @@
 // API route for handling analytical data for the dashboard
 
 import { NextRequest } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { transactions, categories, budgets, wallets } from '@/lib/schema';
 import { and, eq, desc, asc, sum, gte, lte, count, sql } from 'drizzle-orm';
@@ -20,7 +20,14 @@ interface AnalyticsResponse {
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = auth();
+    // Use BetterAuth instead of Clerk
+    const session = await auth.api.getSession({
+      headers: {
+        cookie: request.headers.get('cookie') || '',
+      },
+    });
+    
+    const userId = session?.user?.id;
     
     if (!userId) {
       return new Response('Unauthorized', { status: 401 });
