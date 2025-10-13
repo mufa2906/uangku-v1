@@ -130,7 +130,7 @@ The implementation includes comprehensive testing capabilities:
 - Unit tests for offline storage
 - Integration tests for sync functionality
 - End-to-end tests for offline scenarios
-- Manual testing guide in `docs/TESTING_OFFLINE.md`
+- Manual testing guide in `../testing-docs/TESTING_OFFLINE.md`
 - Automated testing script in `scripts/test-offline.js`
 
 ## Verification Points

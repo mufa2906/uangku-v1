@@ -41,12 +41,12 @@ The application has completed all core functionality. Current development priori
 - Comprehensive dashboard with insights
 - Logout functionality with confirmation dialog
 - Navigation enhancement (centralized access in Profile page)
+- PWA implementation (offline capabilities and push notifications)
 
 ### 🔄 In Progress Features
 - Enhanced accessibility features
 
 ### 🗓️ Future Features
-- PWA implementation (offline capabilities temporarily deferred)
 - Expense forecasting and prediction
 - Bank account integration
 

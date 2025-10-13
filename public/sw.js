@@ -2,34 +2,12 @@
 // Service Worker for Uangku PWA
 
 const CACHE_NAME = 'uangku-v1';
-const ASSETS_TO_CACHE = [
+const urlsToCache = [
   '/',
   '/offline',
-  '/dashboard',
-  '/transactions',
-  '/wallets',
-  '/bills',
-  '/budgets',
-  '/goals',
-  '/categories',
-  '/profile',
-  '/settings',
   '/manifest.json',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
-  '/icons/icon-192x192.svg',
-  '/icons/icon-512x512.svg',
-];
-
-// API endpoints to cache for offline functionality
-const API_ENDPOINTS = [
-  '/api/transactions',
-  '/api/wallets',
-  '/api/categories',
-  '/api/budgets',
-  '/api/goals',
-  '/api/bills',
-  '/api/insights',
 ];
 
 self.addEventListener('install', (event) => {
@@ -37,24 +15,49 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Opened cache');
-        return cache.addAll(ASSETS_TO_CACHE);
-      })
-      .catch((error) => {
-        console.error('Failed to cache assets:', error);
+        return cache.addAll(urlsToCache);
       })
   );
 });
 
+// Simplified fetch handler to properly handle Next.js development and external requests
 self.addEventListener('fetch', (event) => {
-  // Handle API requests specially - only cache successful responses
-  if (event.request.url.includes('/api/')) {
+  // Skip processing for external resources (like Clerk, analytics, etc.)
+  if (event.request.url.startsWith('http') && !event.request.url.includes(self.location.host)) {
+    // For external requests, just fetch normally without caching
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Handle navigation requests
+  if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          // Clone the response to use it in multiple places
+          // Return the response as-is when online
+          return response;
+        })
+        .catch(() => {
+          // When offline, try to return the main page
+          return caches.match('/')
+            .then((response) => {
+              return response || new Response(
+                '<!DOCTYPE html><html><head><title>Offline</title></head><body><h1>You are offline</h1><p>Please reconnect to access the application.</p></body></html>',
+                { headers: { 'Content-Type': 'text/html' } }
+              );
+            });
+        })
+    );
+  }
+  // Handle API requests
+  else if (event.request.url.includes('/api/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // Clone the response to cache
           const responseToCache = response.clone();
           
-          // Cache successful API responses for better performance
+          // Cache successful responses
           if (response.ok) {
             caches.open(CACHE_NAME)
               .then((cache) => {
@@ -65,14 +68,14 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          // If the network request fails, try to get from cache
+          // If network fails, try to return cached response
           return caches.match(event.request)
             .then((cachedResponse) => {
               if (cachedResponse) {
                 return cachedResponse;
               }
               
-              // For API requests that fail, return offline mode response
+              // For API requests when offline, return appropriate response
               if (event.request.url.includes('/api/')) {
                 return new Response(
                   JSON.stringify({ 
@@ -87,7 +90,6 @@ self.addEventListener('fetch', (event) => {
                 );
               }
               
-              // Generic offline response
               return new Response(
                 JSON.stringify({ error: 'OFFLINE', message: 'No internet connection' }), 
                 { status: 503, headers: { 'Content-Type': 'application/json' } }
@@ -95,61 +97,44 @@ self.addEventListener('fetch', (event) => {
             });
         })
     );
-  } 
-// Handle document requests (pages) - serve offline page when offline
-  else if (event.request.destination === 'document') {
-    event.respondWith(
-      fetch(event.request)
-        .catch(() => {
-          // For authenticated pages that fail, serve offline page
-          if (event.request.url.includes('/api/') || 
-              event.request.url.includes('/dashboard') ||
-              event.request.url.includes('/transactions') ||
-              event.request.url.includes('/wallets') ||
-              event.request.url.includes('/bills') ||
-              event.request.url.includes('/budgets') ||
-              event.request.url.includes('/goals') ||
-              event.request.url.includes('/categories') ||
-              event.request.url.includes('/profile') ||
-              event.request.url.includes('/settings')) {
-            // Try to serve the offline page
-            return caches.match('/offline')
-              .then((response) => {
-                // If offline page is cached, serve it
-                if (response) {
-                  return response;
-                }
-                // Fallback to simple offline HTML
-                return caches.match('/offline.html')
-                  .then(fallbackResponse => fallbackResponse || new Response(
-                    '<!DOCTYPE html><html><head><title>Offline</title></head><body><h1>You are offline</h1><p>Please check your connection and try again.</p></body></html>',
-                    { headers: { 'Content-Type': 'text/html' } }
-                  ));
-              });
-          }
-          
-          // For other document requests, try cache first
-          return caches.match(event.request)
-            .then((response) => {
-              return response || caches.match('/');
-            });
-        })
-    );
-  } else {
-    // Handle static assets normally
+  }
+  // Handle all other requests (same origin)
+  else {
     event.respondWith(
       caches.match(event.request)
-        .then((response) => {
-          // Return cached version if available, otherwise fetch from network
-          if (response) {
-            return response;
+        .then((cachedResponse) => {
+          // If found in cache, return it
+          if (cachedResponse) {
+            return cachedResponse;
           }
+
+          // Otherwise, fetch from network
           return fetch(event.request)
-            .catch(() => {
-              // For HTML pages, serve the main page when offline
-              if (event.request.destination === 'document') {
-                return caches.match('/');
+            .then((response) => {
+              // If the response is valid and it's a GET request, cache it
+              if (response.ok && event.request.method === 'GET') {
+                const responseToCache = response.clone();
+                
+                caches.open(CACHE_NAME)
+                  .then((cache) => {
+                    cache.put(event.request, responseToCache);
+                  });
               }
+
+              return response;
+            })
+            .catch(() => {
+              // For assets that can't be fetched when offline
+              const destination = event.request.destination;
+              if (destination === 'image') {
+                // Return a transparent 1x1 pixel gif for images
+                return new Response('R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==', {
+                  headers: { 'Content-Type': 'image/gif' }
+                });
+              }
+              
+              // For other resources when offline, return the main page to allow app to handle
+              return caches.match('/');
             });
         })
     );
