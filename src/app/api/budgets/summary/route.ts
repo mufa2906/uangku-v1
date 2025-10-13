@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
         walletId: budgets.walletId,
         categoryId: budgets.categoryId,
         categoryName: categories.name,
+        budgetName: budgets.name, // Include budget name for custom budgets
         categoryType: categories.type,
         allocatedAmount: budgets.allocatedAmount,
         remainingAmount: budgets.remainingAmount,
@@ -89,7 +90,8 @@ export async function GET(request: NextRequest) {
         budgetId: budget.id,
         walletId: budget.walletId,
         categoryId: budget.categoryId,
-        categoryName: budget.categoryName,
+        // Use category name if available; otherwise use budget name for custom budgets
+        categoryName: budget.categoryName || budget.budgetName || 'Unnamed Budget',
         categoryType: budget.categoryType,
         allocatedAmount: allocatedAmount,
         remainingAmount: remainingAmount,

@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Transaction, Budget, Wallet, Bill } from '@/types';
 import WeeklyBarChart from '@/components/charts/WeeklyBar';
 import { FloatingButton } from '@/components/ui/floating-button';
-import { Plus, AlertCircle, Calendar, Clock } from 'lucide-react';
+import { Plus, AlertCircle, Calendar, Clock, TrendingUp, TrendingDown, CalendarDays } from 'lucide-react';
 import TransactionFormSheet from '@/components/transactions/TransactionFormSheet';
 import AppBottomNav from '@/components/shells/AppBottomNav';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -38,6 +38,16 @@ interface InsightData {
   };
 }
 
+// Define analytical data types
+interface AnalyticalData {
+  highestTransactions: Transaction[];
+  lowestTransactions: Transaction[];
+  topCategories: { name: string; amount: number; count: number }[];
+  totalSpendingByPeriod: number;
+  totalIncomeByPeriod: number;
+  periodLabel: string;
+}
+
 export default function DashboardPage() {
   const { userId } = useAuth();
   const { formatCurrency } = useCurrency();
@@ -47,9 +57,14 @@ export default function DashboardPage() {
   const [budgets, setBudgets] = useState<Budget[]>([]); // Add budgets state
   const [wallets, setWallets] = useState<Wallet[]>([]); // Add wallets state
   const [bills, setBills] = useState<BillWithJoins[]>([]); // Add bills state with proper typing
+  const [analyticalData, setAnalyticalData] = useState<AnalyticalData | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  // Add state for date range selection
+  const [dateRange, setDateRange] = useState<'week' | 'month' | 'year' | 'custom'>('month');
+  const [customStartDate, setCustomStartDate] = useState<string>('');
+  const [customEndDate, setCustomEndDate] = useState<string>('');
 
   useEffect(() => {
     if (userId) {
@@ -60,6 +75,13 @@ export default function DashboardPage() {
     }
   }, [userId]);
 
+  // Fetch analytical data when date range changes
+  useEffect(() => {
+    if (userId && (dateRange !== 'custom' || (customStartDate && customEndDate))) {
+      fetchAnalyticalData();
+    }
+  }, [dateRange, customStartDate, customEndDate, userId]);
+
   const fetchDashboardData = async () => {
     try {
       // Fetch insights which includes transactions and summary
@@ -69,8 +91,8 @@ export default function DashboardPage() {
         setInsights(insightsData);
       }
 
-      // Fetch recent transactions
-      const transactionsRes = await fetch(`/api/transactions?limit=5`);
+      // Fetch all transactions for analytics (not just recent ones)
+      const transactionsRes = await fetch('/api/transactions');
       if (transactionsRes.ok) {
         const { transactions: fetchedTransactions } = await transactionsRes.json();
         setTransactions(fetchedTransactions);
@@ -82,8 +104,31 @@ export default function DashboardPage() {
         const categoriesData = await categoriesRes.json();
         setCategories(categoriesData);
       }
+      
+      // Fetch analytical data
+      await fetchAnalyticalData();
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+    }
+  };
+
+  const fetchAnalyticalData = async () => {
+    try {
+      // Build query parameters based on selected date range
+      let queryParams = '';
+      if (dateRange === 'custom' && customStartDate && customEndDate) {
+        queryParams = `?startDate=${customStartDate}&endDate=${customEndDate}`;
+      } else {
+        queryParams = `?period=${dateRange}`;
+      }
+
+      const analyticsRes = await fetch(`/api/analytics${queryParams}`);
+      if (analyticsRes.ok) {
+        const data = await analyticsRes.json();
+        setAnalyticalData(data);
+      }
+    } catch (error) {
+      console.error('Error fetching analytical data:', error);
     }
   };
 
@@ -385,35 +430,152 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Recent Transactions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Transactions</CardTitle>
+        {/* Analytical Insights with Date Range Selector */}
+        <Card className="mb-6">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Period Analytics</CardTitle>
+            <div className="flex gap-2">
+              <select
+                className="border rounded-md px-2 py-1 text-sm"
+                value={dateRange}
+                onChange={(e) => setDateRange(e.target.value as 'week' | 'month' | 'year' | 'custom')}
+              >
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="year">This Year</option>
+                <option value="custom">Custom Range</option>
+              </select>
+              
+              {dateRange === 'custom' && (
+                <>
+                  <input
+                    type="date"
+                    className="border rounded-md px-2 py-1 text-sm"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                  />
+                  <input
+                    type="date"
+                    className="border rounded-md px-2 py-1 text-sm"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                  />
+                </>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
-            {transactions.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">No transactions yet. Add your first transaction!</p>
-            ) : (
-              <div className="space-y-3">
-                {transactions.map(transaction => (
-                  <div 
-                    key={transaction.id} 
-                    className="flex justify-between items-center p-3 border-b border-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded"
-                  >
-                    <div>
-                      <div className="font-medium">
-                        {transaction.categoryName || 'Uncategorized'}
+            {analyticalData ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Highest Transactions */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                        <TrendingUp className="h-4 w-4 text-green-600" />
+                        Highest Transactions
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {analyticalData.highestTransactions.length > 0 ? (
+                        <div className="space-y-2">
+                          {analyticalData.highestTransactions.slice(0, 3).map((transaction, index) => (
+                            <div key={index} className="flex justify-between items-center">
+                              <div className="flex items-center">
+                                <span className="text-sm text-gray-500 mr-2">#{index + 1}</span>
+                                <div>
+                                  <div className="font-medium">{transaction.note || transaction.categoryName || 'No note'}</div>
+                                  <div className="text-xs text-gray-500">{transaction.categoryName}</div>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-medium text-red-600">
+                                  -{formatCurrency(parseFloat(transaction.amount))}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {new Date(transaction.date).toLocaleDateString()}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 text-sm">No transactions in this period</p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Lowest Transactions */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                        <TrendingDown className="h-4 w-4 text-red-600" />
+                        Lowest Transactions
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {analyticalData.lowestTransactions.length > 0 ? (
+                        <div className="space-y-2">
+                          {analyticalData.lowestTransactions.slice(0, 3).map((transaction, index) => (
+                            <div key={index} className="flex justify-between items-center">
+                              <div className="flex items-center">
+                                <span className="text-sm text-gray-500 mr-2">#{index + 1}</span>
+                                <div>
+                                  <div className="font-medium">{transaction.note || transaction.categoryName || 'No note'}</div>
+                                  <div className="text-xs text-gray-500">{transaction.categoryName}</div>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-medium text-red-600">
+                                  -{formatCurrency(parseFloat(transaction.amount))}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {new Date(transaction.date).toLocaleDateString()}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 text-sm">No transactions in this period</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Top Categories */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-medium">Top Spending Categories</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {analyticalData.topCategories.length > 0 ? (
+                      <div className="space-y-3">
+                        {analyticalData.topCategories.map((category, index) => (
+                          <div key={index} className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <span className="text-sm text-gray-500 mr-3">#{index + 1}</span>
+                              <span className="font-medium">{category.name}</span>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-medium">
+                                {formatCurrency(category.amount)}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {category.count} {category.count === 1 ? 'transaction' : 'transactions'}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {new Date(transaction.date).toLocaleDateString()}
-                      </div>
-                    </div>
-                    <div className={`font-medium ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                      {transaction.type === 'income' ? '+' : '-'}{formatCurrency(parseFloat(transaction.amount))}
-                    </div>
-                  </div>
-                ))}
+                    ) : (
+                      <p className="text-gray-500 text-sm">No spending data in this period</p>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
+            ) : (
+              <p className="text-gray-500 text-center py-4">Loading analytics...</p>
             )}
           </CardContent>
         </Card>

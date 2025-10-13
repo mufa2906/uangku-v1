@@ -48,6 +48,7 @@ export default function TransactionsPage() {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
+  const [filterBudget, setFilterBudget] = useState<string>('all'); // 'all' or specific budget ID
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -284,14 +285,15 @@ export default function TransactionsPage() {
     return result;
   };
 
-  // Filter transactions based on search and type, then sort by createdAt (most recent first)
+  // Filter transactions based on search, type, and budget, then sort by createdAt (most recent first)
   const filteredTransactions = transactions
     .filter(transaction => {
       const matchesSearch = transaction.note?.toLowerCase().includes(searchTerm.toLowerCase()) || 
                             transaction.categoryName?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesType = filterType === 'all' || transaction.type === filterType;
+      const matchesBudget = filterBudget === 'all' || transaction.budgetId === filterBudget;
       
-      return matchesSearch && matchesType;
+      return matchesSearch && matchesType && matchesBudget;
     })
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()); // Sort by creation time descending (newest first)
 
@@ -323,6 +325,18 @@ export default function TransactionsPage() {
               <option value="all">All</option>
               <option value="income">Income</option>
               <option value="expense">Expense</option>
+            </select>
+            <select
+              className="border rounded-md px-3 py-2 w-full sm:w-auto"
+              value={filterBudget}
+              onChange={(e) => setFilterBudget(e.target.value)}
+            >
+              <option value="all">All Budgets</option>
+              {budgets.map(budget => (
+                <option key={budget.id} value={budget.id}>
+                  {budget.name || budget.categoryName || 'Unnamed Budget'}
+                </option>
+              ))}
             </select>
             <select
               className="border rounded-md px-3 py-2 w-full sm:w-auto"

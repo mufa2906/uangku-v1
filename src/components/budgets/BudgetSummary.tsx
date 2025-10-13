@@ -14,8 +14,8 @@ interface BudgetSummaryItem {
   categoryId: string;
   categoryName: string;
   categoryType: string;
-  allocatedAmount: string;
-  remainingAmount: string;
+  allocatedAmount: number;
+  remainingAmount: number;
   spentAmount: number;
   currency: string;
   period: string;
@@ -53,11 +53,11 @@ export default function BudgetSummary() {
         id: item.budgetId,
         walletId: item.walletId,
         categoryId: item.categoryId,
-        categoryName: item.categoryName || item.name, // For custom budgets, use name if categoryName is null
+        categoryName: item.categoryName,
         categoryType: item.categoryType,
-        allocatedAmount: item.allocatedAmount,
+        allocatedAmount: parseFloat(item.allocatedAmount),
         spentAmount: item.totalSpending,
-        remainingAmount: item.remainingAmount,
+        remainingAmount: parseFloat(item.remainingAmount),
         currency: item.currency,
         period: item.period,
         percentageUsed: item.percentageUsed,

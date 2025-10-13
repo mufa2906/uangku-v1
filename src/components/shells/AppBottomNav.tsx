@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 export default function AppBottomNav() {
   const pathname = usePathname();
 
-  // Navigation structure: Dashboard, Transactions, Wallets/Budgets, Profile
+  // Navigation structure: Dashboard, Budgets, Transactions, Profile
   const navItems = [
     {
       name: 'Dashboard',
@@ -17,14 +17,14 @@ export default function AppBottomNav() {
       icon: Home,
     },
     {
+      name: 'Budgets',
+      href: '/budgets',
+      icon: Wallet,
+    },
+    {
       name: 'Transactions',
       href: '/transactions',
       icon: FileText,
-    },
-    {
-      name: 'Wallets',
-      href: '/wallets',
-      icon: Wallet,
     },
     {
       name: 'Profile',
