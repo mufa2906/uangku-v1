@@ -24,12 +24,14 @@ The PWA implementation enhances Uangku with native-like capabilities including o
   - Theme and background colors
 
 ### 3. Offline Transaction Storage
-- **Location**: `src/lib/offline-storage.ts`
+- **Location**: `src/lib/offline-storage.ts` (localStorage fallback) and `src/lib/indexeddb-storage.ts` (primary storage)
 - **Features**:
-  - Local storage of offline transactions
-  - Sync status tracking
+  - IndexedDB-based storage as primary offline storage mechanism
+  - LocalStorage fallback for browsers without IndexedDB support
+  - Automatic migration from localStorage to IndexedDB for existing users
+  - Sync status tracking with local and server IDs
   - Automatic cleanup of synced transactions
-  - IndexedDB integration (planned)
+  - Robust error handling with graceful degradation
 
 ### 4. Offline Transaction UI
 - **Location**: `src/app/offline/page.tsx`
@@ -78,12 +80,13 @@ The PWA implementation enhances Uangku with native-like capabilities including o
 10. `src/components/offline/OfflineTransactionList.tsx` - Offline transaction list component
 11. `src/components/settings/PWASettings.tsx` - PWA settings panel
 12. `src/contexts/PWAContext.tsx` - PWA state management context
-13. `src/lib/offline-storage.ts` - Offline transaction storage
-14. `src/lib/push-notification-utils.ts` - Push notification utilities
-15. `src/services/push-notification-service.ts` - Push notification service
-16. `src/hooks/useOfflineSync.ts` - Hook for offline sync functionality
-17. `docs/TESTING_OFFLINE.md` - Comprehensive offline testing guide
-18. `scripts/test-offline.js` - Automated offline testing script
+13. `src/lib/offline-storage.ts` - Legacy offline transaction storage (localStorage fallback)
+14. `src/lib/indexeddb-storage.ts` - Primary offline transaction storage (IndexedDB)
+15. `src/lib/push-notification-utils.ts` - Push notification utilities
+16. `src/services/push-notification-service.ts` - Push notification service
+17. `src/hooks/useOfflineSync.ts` - Hook for offline sync functionality
+18. `docs/TESTING_OFFLINE.md` - Comprehensive offline testing guide
+19. `scripts/test-offline.js` - Automated offline testing script
 
 ### Existing Files Modified
 1. `src/app/layout.tsx` - Added layout wrapper
@@ -103,11 +106,12 @@ The PWA implementation enhances Uangku with native-like capabilities including o
 
 ### Offline Transaction Flow
 1. User creates transaction while offline
-2. Transaction is stored in localStorage with `synced: false` status
+2. Transaction is stored in IndexedDB with `synced: false` status (falls back to localStorage if IndexedDB unavailable)
 3. When online, service worker detects connectivity
 4. Pending transactions are automatically synced to server
 5. Successfully synced transactions are marked with `synced: true`
 6. Synced transactions are removed from offline storage
+7. Data is automatically migrated from localStorage to IndexedDB on first access for existing users
 
 ### Push Notification Flow
 1. User enables push notifications in settings
@@ -136,13 +140,15 @@ The implementation includes comprehensive testing capabilities:
 ## Verification Points
 ✅ Service worker registers successfully
 ✅ App installs as PWA
-✅ Offline transactions save locally
+✅ Offline transactions save locally using IndexedDB with localStorage fallback
 ✅ Offline transactions sync when online
 ✅ Push notifications display correctly
 ✅ App works in standalone mode
 ✅ Connection status indicators work
 ✅ Update mechanism functions properly
 ✅ All existing functionality preserved
+✅ Data migration from localStorage to IndexedDB works correctly
+✅ IndexedDB storage is used as primary storage mechanism
 
 ## Known Limitations
 ⚠️ iOS Safari has limited PWA capabilities
@@ -151,7 +157,6 @@ The implementation includes comprehensive testing capabilities:
 ⚠️ Background sync may be limited by browser policies
 
 ## Future Enhancements
-🗓️ IndexedDB integration for better offline storage
 🗓️ Background sync API for more reliable syncing
 🗓️ Enhanced offline dashboards with cached insights
 🗓️ Progressive enhancement for advanced offline features

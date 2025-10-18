@@ -161,6 +161,44 @@ This document provides comprehensive instructions for testing the offline capabi
    - No data conflicts
    - No duplicate transactions
 
+### Scenario 9: IndexedDB Storage Verification
+**Objective**: Verify that transactions are stored in IndexedDB as primary storage
+
+1. Open DevTools → Application tab → IndexedDB
+2. Look for the "_uangku_db" database
+3. Verify that the "offline_transactions" object store exists
+4. Go offline and create a transaction
+5. Refresh the IndexedDB view
+6. Verify:
+   - Transaction appears in IndexedDB with `synced: false`
+   - Transaction data is correctly stored
+   - Local ID is properly generated
+
+### Scenario 10: localStorage Fallback Testing
+**Objective**: Verify that localStorage is used as fallback when IndexedDB is unavailable
+
+1. Disable IndexedDB in browser (DevTools → Application → Clear storage → IndexedDB)
+2. Simulate offline conditions
+3. Create a transaction
+4. Check localStorage for the transaction
+5. Verify:
+   - Transaction is stored in localStorage with `synced: false`
+   - Local ID is properly generated
+   - Transaction data is correctly stored
+
+### Scenario 11: Migration from localStorage to IndexedDB
+**Objective**: Verify that existing localStorage data migrates to IndexedDB
+
+1. Add some transactions to localStorage using the old system
+2. Clear IndexedDB data
+3. Access the application (this should trigger migration)
+4. Check IndexedDB for the migrated transactions
+5. Verify that localStorage is cleared after migration
+6. Verify:
+   - All localStorage transactions appear in IndexedDB
+   - localStorage is emptied after successful migration
+   - Transactions maintain their original data
+
 ## Verification Points
 
 ### Service Worker Registration
@@ -170,10 +208,22 @@ This document provides comprehensive instructions for testing the offline capabi
 - [ ] Service worker caches appropriate assets
 
 ### Offline Storage
-- [ ] offline_transactions localStorage entry exists
-- [ ] Transactions stored with correct structure
-- [ ] Synced transactions properly marked
-- [ ] Clean up of synced transactions works
+- [ ] offline_transactions localStorage entry exists (legacy fallback)
+- [ ] IndexedDB database exists with correct structure
+- [ ] Transactions stored with correct structure in IndexedDB
+- [ ] Synced transactions properly marked in IndexedDB
+- [ ] Clean up of synced transactions works in IndexedDB
+- [ ] Migration from localStorage to IndexedDB works correctly
+- [ ] Fallback to localStorage when IndexedDB unavailable
+
+### IndexedDB Operations
+- [ ] IndexedDB transactions save quickly (<1 second)
+- [ ] IndexedDB handles large datasets efficiently
+- [ ] IndexedDB transactions persist across sessions
+- [ ] IndexedDB transactions sync correctly when online
+- [ ] IndexedDB error handling works properly
+- [ ] IndexedDB transactions can be updated and deleted
+- [ ] IndexedDB properly handles concurrent operations
 
 ### Application Behavior
 - [ ] Offline mode detection accurate
@@ -207,13 +257,22 @@ This document provides comprehensive instructions for testing the offline capabi
 
 #### Issue: Offline transactions not saving
 **Solution**:
-1. Verify `localStorage` is accessible
+1. Verify `IndexedDB` is accessible and functioning
 2. Check console for JavaScript errors
-3. Ensure `OfflineStorage` class functions correctly
-4. Verify IndexedDB permissions (if using)
+3. Ensure `IndexedDBStorage` class functions correctly
+4. Verify IndexedDB permissions
+5. Check fallback to `localStorage` if IndexedDB fails
+6. Verify migration from `localStorage` to `IndexedDB` works correctly
 
 #### Issue: Sync not working when online
 **Solution**:
+1. Check network connectivity
+2. Verify IndexedDB transactions exist with `synced: false`
+3. Check API endpoint `/api/offline-transactions` is accessible
+4. Ensure authentication token is valid
+5. Check server logs for sync errors
+6. Verify database connections are working
+7. Test with small batch of transactions first
 1. Check browser console for sync errors
 2. Verify API endpoint accessibility
 3. Check authentication status

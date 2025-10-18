@@ -1,27 +1,12 @@
 // src/lib/auth/config.ts
-// BetterAuth configuration for Uangku
+// Client-side BetterAuth configuration for Uangku (without database adapter)
 
 import { betterAuth } from 'better-auth';
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { db } from '@/lib/db';
-import { 
-  user, 
-  account, 
-  session, 
-  verification 
-} from '@/lib/schema';
 
+// Client-side config without database adapter
+// This config is used only for client-side API calls
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET || 'dev-secret-for-development-please-set-in-production',
-  database: drizzleAdapter(db, {
-    schema: {
-      user: user,
-      account: account,
-      session: session,
-      verificationToken: verification,
-    },
-    provider: 'pg', // Specify the database provider
-  }),
   emailAndPassword: {
     enabled: true,
     autoSignIn: true,

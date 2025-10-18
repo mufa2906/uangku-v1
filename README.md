@@ -28,6 +28,29 @@
 - **Period options**: Weekly, monthly, or yearly budget periods
 
 ### 🎯 Financial Goal Tracking
+- **Progress monitoring**: Track your savings goals with visual progress indicators
+- **Deadline setting**: Set target dates for achieving your financial objectives
+- **Flexible naming**: Create goals for any financial objective (emergency fund, vacation, etc.)
+
+### 🔌 Enhanced Offline Functionality
+- **Robust storage**: IndexedDB-based storage with localStorage fallback for maximum reliability
+- **Seamless sync**: Automatic synchronization when connectivity is restored
+- **Persistent data**: Transactions saved locally until synced to server
+- **Migration system**: Automatic migration from localStorage to IndexedDB for existing users
+
+### ♿ Enhanced Accessibility Features
+- **High contrast mode**: Improved contrast ratios for better readability in bright conditions
+- **Adjustable font sizes**: Small, normal, large, and extra-large text options
+- **Reduced motion**: Disable animations for users sensitive to motion
+- **Keyboard navigation**: Enhanced focus indicators for keyboard-only users
+- **Screen reader support**: Proper semantic HTML and ARIA attributes
+- **Accessibility settings page**: Dedicated page for configuring accessibility preferences
+
+### 🔐 Secure Authentication
+- **Self-hosted auth**: Migrated from third-party Clerk to BetterAuth for reduced dependencies
+- **Password hashing**: Secure password storage with industry-standard encryption
+- **Session management**: Persistent sessions with configurable expiration
+- **Social login**: Google OAuth integration for easy sign-in
 - **Goal creation**: Set specific financial goals like "Emergency Fund" or "New Car"
 - **Progress tracking**: Monitor current amount vs. target amount
 - **Status management**: Goals can be active, paused, completed, or cancelled
@@ -125,6 +148,36 @@ Uangku is built with cutting-edge technology:
 - **Database**: Supabase PostgreSQL with Drizzle ORM
 - **Charts**: Recharts for data visualization
 - **Deployment**: Vercel for fast global delivery
+
+## Technical Improvements
+
+### Enhanced Accessibility Features
+- **High Contrast Mode**: Improved contrast ratios for better readability in bright outdoor conditions
+- **Adjustable Font Sizes**: Four font size options (small, normal, large, extra-large) for users with visual impairments
+- **Reduced Motion**: Option to disable animations for users with vestibular disorders
+- **Keyboard Navigation**: Enhanced focus indicators and keyboard shortcuts for keyboard-only users
+- **Screen Reader Support**: Proper semantic HTML and ARIA attributes for assistive technology compatibility
+- **Accessibility Settings Page**: Dedicated interface for users to customize their accessibility preferences
+
+### Improved Offline Functionality
+- **IndexedDB Storage**: Robust client-side storage using IndexedDB as primary storage with localStorage fallback
+- **Automatic Sync**: Seamless synchronization of offline transactions when connectivity is restored
+- **Persistent Data**: Transactions saved locally until successfully synced to server
+- **Storage Migration**: Automatic migration from localStorage to IndexedDB for existing users
+- **Error Handling**: Graceful degradation with comprehensive error handling for network issues
+
+### Progressive Web App (PWA) Features
+- **Installable**: Native-like installation experience on mobile and desktop devices
+- **Push Notifications**: Real-time notifications for bill reminders and budget warnings
+- **Offline Transaction Entry**: Create transactions even when offline with background sync
+- **Service Worker**: Intelligent caching strategies for fast loading and offline access
+- **Web App Manifest**: Proper metadata for installable app experience with custom icons
+
+### Authentication System
+- **Self-Hosted Solution**: Migration from third-party Clerk to BetterAuth for reduced dependencies
+- **Secure Sessions**: Industry-standard password hashing and session management
+- **Social Login**: Google OAuth integration for convenient sign-in
+- **Account Linking**: Seamless linking of multiple authentication methods to single account
 
 ## Privacy & Security
 
