@@ -170,7 +170,7 @@ This document provides comprehensive instructions for testing the offline capabi
 4. Go offline and create a transaction
 5. Refresh the IndexedDB view
 6. Verify:
-   - Transaction appears in IndexedDB with `synced: false`
+   - Transaction appears in IndexedDB with `synced: 'false'`
    - Transaction data is correctly stored
    - Local ID is properly generated
 
@@ -267,7 +267,7 @@ This document provides comprehensive instructions for testing the offline capabi
 #### Issue: Sync not working when online
 **Solution**:
 1. Check network connectivity
-2. Verify IndexedDB transactions exist with `synced: false`
+2. Verify IndexedDB transactions exist with `synced: 'false'`
 3. Check API endpoint `/api/offline-transactions` is accessible
 4. Ensure authentication token is valid
 5. Check server logs for sync errors

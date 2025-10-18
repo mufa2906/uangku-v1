@@ -1,12 +1,12 @@
 // src/lib/indexeddb-storage.ts
-import { Transaction } from '@/types';
+import { Transaction } from '../types';
 
 // Define the structure for offline transaction data
 interface OfflineTransaction {
   id: string; // Local ID for offline storage
   transactionData: any; // Partial transaction data without server ID
   createdAt: string; // Timestamp when added offline
-  synced: boolean; // Whether it has been synced to server
+  synced: 'true' | 'false'; // Whether it has been synced to server (stored as string for IndexedDB compatibility)
   serverId?: string; // Server ID after sync
 }
 
@@ -80,7 +80,7 @@ export class IndexedDBStorage {
         id: transactionId,
         transactionData: transaction,
         createdAt: new Date().toISOString(),
-        synced: false
+        synced: 'false' // Store as string for IndexedDB compatibility
       };
       
       const tx = db.transaction(TRANSACTIONS_STORE, 'readwrite');
@@ -110,7 +110,8 @@ export class IndexedDBStorage {
       
       return new Promise((resolve) => {
         try {
-          const request = index.getAll(IDBKeyRange.only(false));
+          // Use string representation for boolean values in IndexedDB
+          const request = index.getAll(IDBKeyRange.only('false'));
           
           request.onsuccess = () => {
             resolve(request.result || []);
@@ -122,7 +123,7 @@ export class IndexedDBStorage {
             const allRequest = store.getAll();
             allRequest.onsuccess = () => {
               const allTransactions = allRequest.result || [];
-              const unsyncedTransactions = allTransactions.filter((tx: any) => !tx.synced);
+              const unsyncedTransactions = allTransactions.filter((tx: any) => tx.synced === 'false');
               resolve(unsyncedTransactions);
             };
             allRequest.onerror = () => {
@@ -136,7 +137,7 @@ export class IndexedDBStorage {
           const allRequest = store.getAll();
           allRequest.onsuccess = () => {
             const allTransactions = allRequest.result || [];
-            const unsyncedTransactions = allTransactions.filter((tx: any) => !tx.synced);
+            const unsyncedTransactions = allTransactions.filter((tx: any) => tx.synced === 'false');
             resolve(unsyncedTransactions);
           };
           allRequest.onerror = () => {
@@ -203,7 +204,7 @@ export class IndexedDBStorage {
       });
       
       if (transaction) {
-        transaction.synced = true;
+        transaction.synced = 'true'; // Store as string for IndexedDB compatibility
         if (serverId) {
           transaction.serverId = serverId;
           transaction.id = serverId; // Update the ID to the server ID
@@ -240,7 +241,7 @@ export class IndexedDBStorage {
       // Get all synced transactions
       const syncedTransactions = await new Promise<OfflineTransaction[]>((resolve, reject) => {
         const index = store.index('synced');
-        const request = index.getAll(IDBKeyRange.only(true));
+        const request = index.getAll(IDBKeyRange.only('true')); // Use string representation
         
         request.onsuccess = () => {
           resolve(request.result);

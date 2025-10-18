@@ -64,7 +64,7 @@ describe('Offline Functionality', () => {
     const firstTransaction = transactions[0];
     expect(firstTransaction.transactionData.type).toBe('income');
     expect(firstTransaction.transactionData.amount).toBe(250000);
-    expect(firstTransaction.synced).toBe(false);
+    expect(firstTransaction.synced).toBe('false');
   });
 
   test('should mark transaction as synced', () => {

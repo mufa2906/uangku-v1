@@ -106,10 +106,10 @@ The PWA implementation enhances Uangku with native-like capabilities including o
 
 ### Offline Transaction Flow
 1. User creates transaction while offline
-2. Transaction is stored in IndexedDB with `synced: false` status (falls back to localStorage if IndexedDB unavailable)
+2. Transaction is stored in IndexedDB with `synced: 'false'` status (falls back to localStorage if IndexedDB unavailable)
 3. When online, service worker detects connectivity
 4. Pending transactions are automatically synced to server
-5. Successfully synced transactions are marked with `synced: true`
+5. Successfully synced transactions are marked with `synced: 'true'`
 6. Synced transactions are removed from offline storage
 7. Data is automatically migrated from localStorage to IndexedDB on first access for existing users
 
