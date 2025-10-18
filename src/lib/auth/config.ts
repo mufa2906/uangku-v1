@@ -29,10 +29,10 @@ export const auth = betterAuth({
     enabled: true,
   },
   session: {
-    // Truly infinite session duration
-    expiresIn: 10 * 365 * 24 * 60 * 60, // 10 years in seconds
+    // Extended session duration (close to browser limit)
+    expiresIn: 34560000, // 400 days in seconds (browser max limit)
     cookie: {
-      maxAge: 10 * 365 * 24 * 60 * 60, // 10 years in seconds
+      maxAge: 34560000, // 400 days in seconds (browser max limit)
     },
   },
   cookies: {
