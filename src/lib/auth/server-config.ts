@@ -44,10 +44,12 @@ export const serverAuth = betterAuth({
     enabled: true,
   },
   session: {
-    // Infinite session duration
-    expiresIn: 365 * 24 * 60 * 60, // 1 year in seconds
+    // Truly infinite session duration
+    expiresIn: 10 * 365 * 24 * 60 * 60, // 10 years in seconds
     cookie: {
-      maxAge: 365 * 24 * 60 * 60, // 1 year in seconds
+      maxAge: 10 * 365 * 24 * 60 * 60, // 10 years in seconds
+      // Auto-refresh session on each request
+      autoRefresh: true,
     },
   },
   cookies: {

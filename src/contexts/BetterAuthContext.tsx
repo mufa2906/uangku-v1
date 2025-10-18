@@ -1,5 +1,5 @@
 // src/contexts/BetterAuthContext.tsx
-// BetterAuth context provider
+// BetterAuth context provider with infinite session support
 
 'use client';
 
@@ -34,6 +34,7 @@ interface BetterAuthContextType {
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string; data?: any }>;
   signUp: (email: string, password: string, name?: string) => Promise<{ success: boolean; error?: string; data?: any }>;
   signOut: () => Promise<{ success: boolean; error?: string }>;
+  refreshSession: () => Promise<void>;
 }
 
 const BetterAuthContext = createContext<BetterAuthContextType | undefined>(undefined);
@@ -42,12 +43,14 @@ export function BetterAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [sessionCheckInterval, setSessionCheckInterval] = useState<NodeJS.Timeout | null>(null);
 
   // Check auth status on mount using fetch to API routes
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
         const response = await fetch('/api/auth/session');
+        
         if (response.ok) {
           const data = await response.json();
           if (data?.user) {
@@ -63,7 +66,46 @@ export function BetterAuthProvider({ children }: { children: ReactNode }) {
     };
 
     checkAuthStatus();
+    
+    // Set up periodic session refresh (every 15 minutes)
+    const interval = setInterval(async () => {
+      await refreshSession();
+    }, 15 * 60 * 1000); // 15 minutes
+    
+    setSessionCheckInterval(interval as any);
+    
+    // Cleanup interval on unmount
+    return () => {
+      if (sessionCheckInterval) {
+        clearInterval(sessionCheckInterval);
+      }
+    };
   }, []);
+
+  // Refresh session function
+  const refreshSession = async () => {
+    try {
+      const response = await fetch('/api/auth/session');
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data?.user) {
+          setUser(data.user);
+          setSession(data.session);
+        } else {
+          // Session expired or invalid, clear user data
+          setUser(null);
+          setSession(null);
+        }
+      } else {
+        // API error, but don't automatically log out
+        console.warn('Session refresh failed:', response.status);
+      }
+    } catch (error) {
+      // Network error, but don't automatically log out
+      console.warn('Session refresh network error:', error);
+    }
+  };
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -159,6 +201,7 @@ export function BetterAuthProvider({ children }: { children: ReactNode }) {
       signIn,
       signUp,
       signOut,
+      refreshSession,
     }}>
       {children}
     </BetterAuthContext.Provider>
