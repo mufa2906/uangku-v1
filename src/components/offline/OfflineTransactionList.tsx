@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
-import { OfflineStorage } from '@/lib/offline-storage';
+import { IndexedDBStorage } from '@/lib/indexeddb-storage';
 import { RefreshCw, Database, Wifi, WifiOff } from 'lucide-react';
 
 export default function OfflineTransactionList() {
@@ -16,9 +16,21 @@ export default function OfflineTransactionList() {
 
   // Load offline transactions
   useEffect(() => {
-    const loadTransactions = () => {
-      const transactions = OfflineStorage.getAllOfflineTransactions();
-      setOfflineTransactions(transactions);
+    const loadTransactions = async () => {
+      try {
+        const transactions = await IndexedDBStorage.getAllOfflineTransactions();
+        setOfflineTransactions(transactions);
+      } catch (error) {
+        console.error('Error loading offline transactions from IndexedDB:', error);
+        // Fallback to localStorage
+        try {
+          const transactions = require('@/lib/offline-storage').OfflineStorage.getAllOfflineTransactions();
+          setOfflineTransactions(transactions);
+        } catch (fallbackError) {
+          console.error('Error loading offline transactions from localStorage:', fallbackError);
+          setOfflineTransactions([]);
+        }
+      }
     };
     
     loadTransactions();
@@ -32,8 +44,20 @@ export default function OfflineTransactionList() {
     await syncPendingTransactions();
     
     // Refresh transaction list
-    const transactions = OfflineStorage.getAllOfflineTransactions();
-    setOfflineTransactions(transactions);
+    try {
+      const transactions = await IndexedDBStorage.getAllOfflineTransactions();
+      setOfflineTransactions(transactions);
+    } catch (error) {
+      console.error('Error refreshing offline transactions from IndexedDB:', error);
+      // Fallback to localStorage
+      try {
+        const transactions = require('@/lib/offline-storage').OfflineStorage.getAllOfflineTransactions();
+        setOfflineTransactions(transactions);
+      } catch (fallbackError) {
+        console.error('Error refreshing offline transactions from localStorage:', fallbackError);
+        setOfflineTransactions([]);
+      }
+    }
   };
 
   return (

@@ -117,7 +117,7 @@ export async function DELETE(request: Request) {
 }
 
 // GET /api/push-subscriptions - Get user's push subscriptions
-export async function GET() {
+export async function GET(request: Request) {
   try {
     // Use BetterAuth instead of Clerk
     const session = await auth.api.getSession({

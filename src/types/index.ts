@@ -3,7 +3,7 @@
 export interface Transaction {
   id: string;
   userId: string;
-  walletId: string;
+  walletId: string | null;
   walletName: string | null;
   categoryId: string | null;
   categoryName: string | null;

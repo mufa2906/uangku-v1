@@ -6,61 +6,63 @@ export const budgetPeriod = pgEnum("budget_period", ["weekly", "monthly", "yearl
 export const walletType = pgEnum("wallet_type", ["cash", "bank", "credit_card", "e_wallet", "savings"]);
 export const goalStatus = pgEnum("goal_status", ["active", "paused", "completed", "cancelled"]);
 
-// BetterAuth tables
-export const users = pgTable("users", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: varchar("name", { length: 255 }),
-  email: varchar("email", { length: 255 }).notNull().unique(),
-  emailVerified: boolean("email_verified").default(false),
-  image: varchar("image", { length: 255 }),
-  password: varchar("password", { length: 255 }),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+// BetterAuth tables with _uangku_ prefix
+export const user = pgTable("_uangku_users", {
+  id: text("id").primaryKey(),
+  name: text("name"),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified").default(false).notNull(),
+  image: text("image"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .$onUpdate(() => new Date())
+    .notNull(),
 });
 
-export const accounts = pgTable("accounts", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
+export const account = pgTable("_uangku_accounts", {
+  id: text("id").primaryKey(),
+  accountId: text("account_id").notNull(),
+  providerId: text("provider_id").notNull(),
+  userId: text("user_id")
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  providerId: varchar("provider_id", { length: 50 }).notNull(), // 'google', 'github', etc.
-  providerAccountId: varchar("provider_account_id", { length: 255 }).notNull(),
+    .references(() => user.id, { onDelete: "cascade" }),
   accessToken: text("access_token"),
   refreshToken: text("refresh_token"),
-  expiresAt: integer("expires_at"),
-  tokenType: varchar("token_type", { length: 50 }),
-  scope: varchar("scope", { length: 255 }),
   idToken: text("id_token"),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
-  
-}, (table) => {
-  return {
-    compoundKey: primaryKey({ columns: [table.providerId, table.providerAccountId] }),
-  };
+  accessTokenExpiresAt: timestamp("access_token_expires_at", { withTimezone: true }),
+  refreshTokenExpiresAt: timestamp("refresh_token_expires_at", { withTimezone: true }),
+  scope: text("scope"),
+  password: text("password"), // For credential-based accounts
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .$onUpdate(() => new Date())
+    .notNull(),
 });
 
-export const sessions = pgTable("sessions", {
-  id: varchar("id", { length: 255 }).primaryKey(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+export const session = pgTable("_uangku_sessions", {
+  id: text("id").primaryKey(),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-  ipAddress: varchar("ip_address", { length: 45 }),
+  token: text("token").notNull().unique(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .$onUpdate(() => new Date())
+    .notNull(),
+  ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
 });
 
-export const verificationTokens = pgTable("verification_tokens", {
-  identifier: varchar("identifier", { length: 255 }).notNull(),
-  token: varchar("token", { length: 255 }).notNull(),
-  expires: timestamp("expires", { withTimezone: true }).notNull(),
-  
-}, (table) => {
-  return {
-    compoundKey: primaryKey({ columns: [table.identifier, table.token] }),
-  };
+export const verification = pgTable("_uangku_verification_tokens", {
+  id: text("id").primaryKey(),
+  identifier: text("identifier").notNull(),
+  value: text("value").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .$onUpdate(() => new Date())
+    .notNull(),
 });
 
 export const categories = pgTable("categories", {

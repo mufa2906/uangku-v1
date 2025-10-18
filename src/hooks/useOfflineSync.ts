@@ -1,6 +1,7 @@
 // src/hooks/useOfflineSync.ts
 import { useState, useEffect } from 'react';
-import { OfflineStorage } from '@/lib/offline-storage';
+import { IndexedDBStorage } from '@/lib/indexeddb-storage';
+import { OfflineStorage } from '@/lib/offline-storage'; // Keep for fallback
 import { Transaction } from '@/types';
 
 // Check if we're in browser environment
@@ -11,11 +12,49 @@ interface UseOfflineSyncReturn {
   pendingTransactions: number;
   syncPendingTransactions: () => Promise<void>;
   hasPendingTransactions: boolean;
+  initialized: boolean; // Whether the storage system is ready
 }
 
 export function useOfflineSync(): UseOfflineSyncReturn {
   const [isOnline, setIsOnline] = useState<boolean>(isBrowser ? navigator.onLine : true);
   const [pendingTransactions, setPendingTransactions] = useState<number>(0);
+  const [hasPending, setHasPending] = useState<boolean>(false);
+  const [initialized, setInitialized] = useState<boolean>(false);
+
+  // Initialize the storage system on mount
+  useEffect(() => {
+    const initializeStorage = async () => {
+      if (!isBrowser) {
+        setInitialized(true);
+        return;
+      }
+
+      try {
+        // Migrate from localStorage to IndexedDB if needed
+        await IndexedDBStorage.migrateFromLocalStorage();
+        // Check for pending transactions on mount
+        const count = await IndexedDBStorage.getPendingCount();
+        setPendingTransactions(count);
+        setHasPending(count > 0);
+      } catch (error) {
+        console.error('Error initializing offline storage:', error);
+        // Fallback to localStorage if IndexedDB fails
+        try {
+          const count = OfflineStorage.getPendingCount();
+          setPendingTransactions(count);
+          setHasPending(count > 0);
+        } catch (fallbackError) {
+          console.error('Error with localStorage fallback:', fallbackError);
+          setPendingTransactions(0);
+          setHasPending(false);
+        }
+      } finally {
+        setInitialized(true);
+      }
+    };
+
+    initializeStorage();
+  }, []);
 
   // Update online status
   useEffect(() => {
@@ -28,9 +67,6 @@ export function useOfflineSync(): UseOfflineSyncReturn {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Check for pending transactions on mount
-    setPendingTransactions(OfflineStorage.getPendingCount());
-
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
@@ -39,18 +75,35 @@ export function useOfflineSync(): UseOfflineSyncReturn {
 
   // Check for pending transactions periodically
   useEffect(() => {
+    if (!initialized) return; // Wait for initialization
+    
     // Only run in browser environment
     if (!isBrowser) return;
     
-    const checkPending = () => {
-      setPendingTransactions(OfflineStorage.getPendingCount());
+    const checkPending = async () => {
+      try {
+        const count = await IndexedDBStorage.getPendingCount();
+        setPendingTransactions(count);
+        setHasPending(count > 0);
+      } catch (error) {
+        // Fallback to localStorage if IndexedDB fails
+        try {
+          const count = OfflineStorage.getPendingCount();
+          setPendingTransactions(count);
+          setHasPending(count > 0);
+        } catch (fallbackError) {
+          console.error('Error checking pending transactions:', fallbackError);
+          setPendingTransactions(0);
+          setHasPending(false);
+        }
+      }
     };
 
     checkPending();
     const interval = setInterval(checkPending, 5000); // Check every 5 seconds
 
     return () => clearInterval(interval);
-  }, []);
+  }, [initialized]);
 
   // Function to sync pending transactions
   const syncPendingTransactions = async (): Promise<void> => {
@@ -62,7 +115,19 @@ export function useOfflineSync(): UseOfflineSyncReturn {
       return;
     }
 
-    const offlineTransactions = OfflineStorage.getOfflineTransactions();
+    // Try IndexedDB first, fallback to localStorage
+    let offlineTransactions = [];
+    try {
+      offlineTransactions = await IndexedDBStorage.getOfflineTransactions();
+    } catch (error) {
+      console.error('Error getting offline transactions from IndexedDB, falling back to localStorage:', error);
+      try {
+        offlineTransactions = OfflineStorage.getOfflineTransactions();
+      } catch (fallbackError) {
+        console.error('Error getting offline transactions from localStorage:', fallbackError);
+        return;
+      }
+    }
     
     if (offlineTransactions.length === 0) {
       console.log('No pending transactions to sync');
@@ -86,7 +151,16 @@ export function useOfflineSync(): UseOfflineSyncReturn {
         if (response.ok) {
           const result = await response.json();
           // Mark as synced with the server ID
-          OfflineStorage.markAsSynced(offlineTx.id, result.id);
+          try {
+            await IndexedDBStorage.markAsSynced(offlineTx.id, result.id);
+          } catch (storageError) {
+            console.error('Error marking transaction as synced in IndexedDB, trying localStorage:', storageError);
+            try {
+              OfflineStorage.markAsSynced(offlineTx.id, result.id);
+            } catch (fallbackError) {
+              console.error('Error marking transaction as synced in localStorage:', fallbackError);
+            }
+          }
           syncedCount++;
           console.log(`Successfully synced transaction ${offlineTx.id}`);
         } else {
@@ -101,18 +175,43 @@ export function useOfflineSync(): UseOfflineSyncReturn {
     }
 
     // Clean up synced transactions from storage
-    OfflineStorage.cleanupSyncedTransactions();
+    try {
+      await IndexedDBStorage.cleanupSyncedTransactions();
+    } catch (cleanupError) {
+      console.error('Error cleaning up synced transactions in IndexedDB, trying localStorage:', cleanupError);
+      try {
+        OfflineStorage.cleanupSyncedTransactions();
+      } catch (fallbackError) {
+        console.error('Error cleaning up synced transactions in localStorage:', fallbackError);
+      }
+    }
     
     // Update pending count
-    setPendingTransactions(OfflineStorage.getPendingCount());
+    try {
+      const count = await IndexedDBStorage.getPendingCount();
+      setPendingTransactions(count);
+      setHasPending(count > 0);
+    } catch (countError) {
+      console.error('Error getting pending count from IndexedDB, falling back to localStorage:', countError);
+      try {
+        const count = OfflineStorage.getPendingCount();
+        setPendingTransactions(count);
+        setHasPending(count > 0);
+      } catch (fallbackError) {
+        console.error('Error getting pending count from localStorage:', fallbackError);
+        setPendingTransactions(0);
+        setHasPending(false);
+      }
+    }
     
     console.log(`Synced ${syncedCount} of ${offlineTransactions.length} transactions`);
   };
 
   return {
     isOnline: isBrowser ? isOnline : true,
-    pendingTransactions: isBrowser ? pendingTransactions : 0,
+    pendingTransactions: isBrowser && initialized ? pendingTransactions : 0,
     syncPendingTransactions,
-    hasPendingTransactions: isBrowser ? OfflineStorage.hasPendingTransactions() : false,
+    hasPendingTransactions: hasPending,
+    initialized,
   };
 }

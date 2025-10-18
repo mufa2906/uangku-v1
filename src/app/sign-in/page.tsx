@@ -9,25 +9,33 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useBetterAuthContext } from '@/contexts/BetterAuthContext';
+import { useToast } from '@/components/ui/toast';
+import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 
 export default function SignInPage() {
   const router = useRouter();
-  const { signIn, isLoading } = useBetterAuthContext();
+  const { addToast } = useToast();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setIsLoading(true);
 
     if (!email || !password) {
-      setError('Please fill in all fields');
+      addToast({
+        title: 'Validation Error',
+        description: 'Please fill in all fields',
+        type: 'error',
+      });
+      setIsLoading(false);
       return;
     }
 
@@ -40,11 +48,21 @@ export default function SignInPage() {
         router.push(redirectUrl);
         router.refresh();
       } else {
-        setError(result.error || 'Sign in failed. Please check your credentials.');
+        addToast({
+          title: 'Sign In Failed',
+          description: result.error || 'Sign in failed. Please check your credentials.',
+          type: 'error',
+        });
       }
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+      addToast({
+        title: 'Error',
+        description: 'An unexpected error occurred. Please try again.',
+        type: 'error',
+      });
       console.error('Sign in error:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -58,12 +76,6 @@ export default function SignInPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>

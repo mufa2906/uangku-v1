@@ -1,6 +1,8 @@
 // src/app/api/auth/[...route]/route.ts
 // BetterAuth API route handler
 
-import { auth } from '@/lib/auth/config';
+import { serverAuth } from '@/lib/auth/server-config';
 
-export const { GET, POST } = auth.handler;
+// Export the handler methods directly
+export const GET = serverAuth.handler;
+export const POST = serverAuth.handler;

@@ -5,20 +5,22 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from '@/lib/db';
 import { 
-  users, 
-  accounts, 
-  sessions, 
-  verificationTokens 
+  user, 
+  account, 
+  session, 
+  verification 
 } from '@/lib/schema';
 
 export const auth = betterAuth({
+  secret: process.env.BETTER_AUTH_SECRET || 'dev-secret-for-development-please-set-in-production',
   database: drizzleAdapter(db, {
     schema: {
-      user: users,
-      account: accounts,
-      session: sessions,
-      verificationToken: verificationTokens,
+      user: user,
+      account: account,
+      session: session,
+      verificationToken: verification,
     },
+    provider: 'pg', // Specify the database provider
   }),
   emailAndPassword: {
     enabled: true,
@@ -40,6 +42,13 @@ export const auth = betterAuth({
   },
   rateLimit: {
     enabled: true,
+  },
+  session: {
+    // Infinite session duration
+    expiresIn: 365 * 24 * 60 * 60, // 1 year in seconds
+    cookie: {
+      maxAge: 365 * 24 * 60 * 60, // 1 year in seconds
+    },
   },
   cookies: {
     secure: process.env.NODE_ENV === 'production',

@@ -72,17 +72,21 @@ export async function GET(request: NextRequest) {
         id: transactions.id,
         userId: transactions.userId,
         walletId: transactions.walletId,
+        walletName: wallets.name, // Include wallet name
         budgetId: transactions.budgetId,
+        budgetName: budgets.name, // Include budget name
         categoryId: transactions.categoryId,
         categoryName: categories.name,
         type: transactions.type,
         amount: transactions.amount,
         note: transactions.note,
-        date: transactions.date,
-        createdAt: transactions.createdAt,
+        date: sql<string>`date(${transactions.date})`.as('date'), // Convert to string
+        createdAt: sql<string>`date(${transactions.createdAt})`.as('createdAt'), // Convert to string
       })
       .from(transactions)
       .leftJoin(categories, eq(transactions.categoryId, categories.id))
+      .leftJoin(wallets, eq(transactions.walletId, wallets.id)) // Join with wallets to get wallet name
+      .leftJoin(budgets, eq(transactions.budgetId, budgets.id)) // Join with budgets to get budget name
       .where(
         and(
           eq(transactions.userId, userId),

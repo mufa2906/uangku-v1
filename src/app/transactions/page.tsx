@@ -334,7 +334,7 @@ export default function TransactionsPage() {
               <option value="all">All Budgets</option>
               {budgets.map(budget => (
                 <option key={budget.id} value={budget.id}>
-                  {budget.name || budget.categoryName || 'Unnamed Budget'}
+                  {budget.name || 'Unnamed Budget'}
                 </option>
               ))}
             </select>

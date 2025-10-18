@@ -4,7 +4,6 @@
 'use client';
 
 import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
-import { auth } from '@/lib/auth/config';
 
 interface User {
   id: string;
@@ -44,15 +43,17 @@ export function BetterAuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Check auth status on mount
+  // Check auth status on mount using fetch to API routes
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const currentSession = await auth.api.getSession();
-        
-        if (currentSession) {
-          setUser(currentSession.user);
-          setSession(currentSession.session);
+        const response = await fetch('/api/auth/session');
+        if (response.ok) {
+          const data = await response.json();
+          if (data?.user) {
+            setUser(data.user);
+            setSession(data.session);
+          }
         }
       } catch (error) {
         console.error('Error checking auth status:', error);
@@ -66,15 +67,27 @@ export function BetterAuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const response = await auth.api.signInEmail({
-        email,
-        password,
+      const response = await fetch('/api/auth/sign-in/email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
       });
       
-      if (response) {
-        setUser(response.user);
-        setSession(response.session);
-        return { success: true, data: response };
+      if (response.ok) {
+        const data = await response.json();
+        if (data?.user) {
+          setUser(data.user);
+          setSession(data.session);
+          return { success: true, data };
+        }
+      } else {
+        const errorData = await response.json();
+        return { success: false, error: errorData?.message || 'Sign in failed' };
       }
       
       return { success: false, error: 'Sign in failed' };
@@ -86,16 +99,28 @@ export function BetterAuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string, name?: string) => {
     try {
-      const response = await auth.api.signUpEmail({
-        email,
-        password,
-        name,
+      const response = await fetch('/api/auth/sign-up/email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          name,
+        }),
       });
       
-      if (response) {
-        setUser(response.user);
-        setSession(response.session);
-        return { success: true, data: response };
+      if (response.ok) {
+        const data = await response.json();
+        if (data?.user) {
+          setUser(data.user);
+          setSession(data.session);
+          return { success: true, data };
+        }
+      } else {
+        const errorData = await response.json();
+        return { success: false, error: errorData?.message || 'Sign up failed' };
       }
       
       return { success: false, error: 'Sign up failed' };
@@ -107,10 +132,17 @@ export function BetterAuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
-      await auth.api.signOut();
-      setUser(null);
-      setSession(null);
-      return { success: true };
+      const response = await fetch('/api/auth/sign-out', {
+        method: 'POST',
+      });
+      
+      if (response.ok) {
+        setUser(null);
+        setSession(null);
+        return { success: true };
+      } else {
+        return { success: false, error: 'Sign out failed' };
+      }
     } catch (error: any) {
       console.error('Sign out error:', error);
       return { success: false, error: error?.message || 'Unknown error' };
@@ -135,5 +167,9 @@ export function BetterAuthProvider({ children }: { children: ReactNode }) {
 
 // Export a useAuth function that matches Clerk's API for compatibility
 export function useAuth() {
-  return useBetterAuthContext();
+  const context = useContext(BetterAuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within a BetterAuthProvider');
+  }
+  return context;
 }

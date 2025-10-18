@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1759760061909,
-      "tag": "0000_silky_stryfe",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1759760332273,
-      "tag": "0001_magenta_loa",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1759760600000,
-      "tag": "0002_update_budgets_schema",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1759760700000,
-      "tag": "0003_bill_reminders",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1759760800000,
-      "tag": "0004_better_auth_tables",
+      "when": 1760712483059,
+      "tag": "0000_init_schema",
       "breakpoints": true
     }
   ]

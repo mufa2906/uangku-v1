@@ -69,6 +69,10 @@ export async function POST(request: Request) {
       if (userCategory.length === 0) {
         return NextResponse.json({ error: 'Category not found' }, { status: 404 });
       }
+    } else {
+      // If no category is provided, we need to provide a default category
+      // For now, let's return an error as category is required
+      return NextResponse.json({ error: 'Category ID is required' }, { status: 400 });
     }
 
     // If a budgetId is provided, verify it exists and belongs to the user
@@ -107,16 +111,42 @@ export async function POST(request: Request) {
       }
     }
 
+    // Get default category if categoryId is not provided
+    let finalCategoryId = categoryId;
+    if (!categoryId) {
+      // Create or find a default category for uncategorized transactions
+      const [defaultCategory] = await db
+        .select()
+        .from(categories)
+        .where(and(eq(categories.name, 'Uncategorized'), eq(categories.userId, userId)));
+      
+      if (defaultCategory && defaultCategory.id) {
+        finalCategoryId = defaultCategory.id;
+      } else {
+        // Create a default uncategorized category if one doesn't exist
+        const [newCategory] = await db
+          .insert(categories)
+          .values({
+            userId: userId,
+            name: 'Uncategorized',
+            type: type, // Use the same type as the transaction
+            icon: ' Uncategorized',
+          })
+          .returning();
+        finalCategoryId = newCategory.id;
+      }
+    }
+
     // Create the transaction
     const [newTransaction] = await db
       .insert(transactions)
       .values({
-        userId,
-        walletId, // Source wallet
+        userId: userId,
+        walletId: walletId, // Source wallet
         budgetId: budgetId || null, // Optional budget reference
-        categoryId: categoryId || null, // Optional category reference
-        type,
-        amount,
+        categoryId: finalCategoryId, // Required category reference
+        type: type,
+        amount: amount,
         note: note || null,
         date: new Date(date),
       })

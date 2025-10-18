@@ -9,14 +9,15 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useBetterAuthContext } from '@/contexts/BetterAuthContext';
+import { useToast } from '@/components/ui/toast';
+import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 
 export default function SignUpPage() {
   const router = useRouter();
-  const { signUp, isLoading } = useBetterAuthContext();
+  const { addToast } = useToast();
+  const { signUp } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,24 +25,29 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setIsLoading(true);
 
     // Validation
     if (!name || !email || !password || !confirmPassword) {
       setError('Please fill in all fields');
+      setIsLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
+      setIsLoading(false);
       return;
     }
 
     if (password.length < 8) {
       setError('Password must be at least 8 characters long');
+      setIsLoading(false);
       return;
     }
 
@@ -59,6 +65,8 @@ export default function SignUpPage() {
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
       console.error('Sign up error:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -72,12 +80,6 @@ export default function SignUpPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>

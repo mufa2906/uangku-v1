@@ -7,9 +7,13 @@ interface AccessibilityContextType {
   highContrast: boolean;
   fontSize: 'small' | 'normal' | 'large' | 'extra-large';
   reduceMotion: boolean;
+  keyboardNavigation: boolean;
+  screenReaderMode: boolean;
   toggleHighContrast: () => void;
   setFontSize: (size: 'small' | 'normal' | 'large' | 'extra-large') => void;
   toggleReduceMotion: () => void;
+  toggleKeyboardNavigation: () => void;
+  toggleScreenReaderMode: () => void;
 }
 
 const AccessibilityContext = createContext<AccessibilityContextType | undefined>(undefined);
@@ -41,6 +45,20 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
     return false;
   });
 
+  const [keyboardNavigation, setKeyboardNavigation] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('accessibility_keyboardNavigation') === 'true';
+    }
+    return false;
+  });
+
+  const [screenReaderMode, setScreenReaderMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('accessibility_screenReaderMode') === 'true';
+    }
+    return false;
+  });
+
   // Apply settings to document
   useEffect(() => {
     const root = document.documentElement;
@@ -66,6 +84,29 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
     }
   }, [highContrast, fontSize, reduceMotion]);
 
+  // Handle keyboard navigation preference
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Tab') {
+        document.body.classList.add('keyboard-navigation');
+      }
+    };
+
+    const handleMouseDown = () => {
+      document.body.classList.remove('keyboard-navigation');
+    };
+
+    if (keyboardNavigation) {
+      window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener('mousedown', handleMouseDown);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('mousedown', handleMouseDown);
+    };
+  }, [keyboardNavigation]);
+
   // Save to localStorage when values change
   useEffect(() => {
     localStorage.setItem('accessibility_highContrast', highContrast.toString());
@@ -79,6 +120,14 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
     localStorage.setItem('accessibility_reduceMotion', reduceMotion.toString());
   }, [reduceMotion]);
 
+  useEffect(() => {
+    localStorage.setItem('accessibility_keyboardNavigation', keyboardNavigation.toString());
+  }, [keyboardNavigation]);
+
+  useEffect(() => {
+    localStorage.setItem('accessibility_screenReaderMode', screenReaderMode.toString());
+  }, [screenReaderMode]);
+
   const toggleHighContrast = () => {
     setHighContrast(prev => !prev);
   };
@@ -91,15 +140,27 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
     setReduceMotion(prev => !prev);
   };
 
+  const toggleKeyboardNavigation = () => {
+    setKeyboardNavigation(prev => !prev);
+  };
+
+  const toggleScreenReaderMode = () => {
+    setScreenReaderMode(prev => !prev);
+  };
+
   return (
     <AccessibilityContext.Provider
       value={{
         highContrast,
         fontSize,
         reduceMotion,
+        keyboardNavigation,
+        screenReaderMode,
         toggleHighContrast,
         setFontSize,
         toggleReduceMotion,
+        toggleKeyboardNavigation,
+        toggleScreenReaderMode,
       }}
     >
       {children}

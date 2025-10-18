@@ -7,6 +7,7 @@ import { ToastProvider } from '@/components/ui/toast'
 import PWARegistration from '@/components/pwa/PWARegistration'
 import { PWAProvider } from '@/contexts/PWAContext'
 import { BetterAuthProvider } from '@/contexts/BetterAuthContext'
+import { AccessibilityProvider } from '@/contexts/AccessibilityContext'
 
 type Props = {
   children: React.ReactNode
@@ -16,14 +17,16 @@ export function Providers({ children }: Props) {
   return (
     <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
       <BetterAuthProvider>
-        <CurrencyProvider>
-          <PWAProvider>
-            <ToastProvider>
-              <PWARegistration />
-              {children}
-            </ToastProvider>
-          </PWAProvider>
-        </CurrencyProvider>
+        <AccessibilityProvider>
+          <CurrencyProvider>
+            <PWAProvider>
+              <ToastProvider>
+                <PWARegistration />
+                {children}
+              </ToastProvider>
+            </PWAProvider>
+          </CurrencyProvider>
+        </AccessibilityProvider>
       </BetterAuthProvider>
     </NextThemesProvider>
   )

@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, numeric, boolean, timestamp, text, foreignKey, date, pgEnum, primaryKey, integer } from "drizzle-orm/pg-core"
+import { pgTable, uuid, varchar, numeric, boolean, timestamp, text, foreignKey, date, pgEnum, primaryKey, integer, uniqueIndex } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const budgetPeriod = pgEnum("budget_period", ['weekly', 'monthly', 'yearly'])
@@ -84,8 +84,8 @@ export const budgets = pgTable("budgets", {
 ]);
 
 // BetterAuth tables
-export const users = pgTable("users", {
-	id: uuid().defaultRandom().primaryKey().notNull(),
+export const users = pgTable("_uangku_users", {
+	id: varchar({ length: 255 }).primaryKey().notNull(),
 	name: varchar({ length: 255 }),
 	email: varchar({ length: 255 }).notNull(),
 	emailVerified: boolean("email_verified").default(false),
@@ -95,9 +95,9 @@ export const users = pgTable("users", {
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
 });
 
-export const accounts = pgTable("accounts", {
+export const accounts = pgTable("_uangku_accounts", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
-	userId: uuid("user_id").notNull(),
+	userId: varchar("user_id", { length: 255 }).notNull(),
 	providerId: varchar("provider_id", { length: 50 }).notNull(),
 	providerAccountId: varchar("provider_account_id", { length: 255 }).notNull(),
 	accessToken: text("access_token"),
@@ -112,14 +112,15 @@ export const accounts = pgTable("accounts", {
 	foreignKey({
 			columns: [table.userId],
 			foreignColumns: [users.id],
-			name: "accounts_user_id_users_id_fk"
+			name: "_uangku_accounts_user_id__uangku_users_id_fk"
 		}).onDelete("cascade"),
-	primaryKey({ columns: [table.providerId, table.providerAccountId] }),
+	// Composite unique constraint instead of primary key
+	uniqueIndex("provider_account_unique").on(table.providerId, table.providerAccountId),
 ]);
 
-export const sessions = pgTable("sessions", {
+export const sessions = pgTable("_uangku_sessions", {
 	id: varchar({ length: 255 }).primaryKey().notNull(),
-	userId: uuid("user_id").notNull(),
+	userId: varchar("user_id", { length: 255 }).notNull(),
 	expiresAt: timestamp("expires_at", { withTimezone: true, mode: 'string' }).notNull(),
 	ipAddress: varchar("ip_address", { length: 45 }),
 	userAgent: text("user_agent"),
@@ -129,11 +130,11 @@ export const sessions = pgTable("sessions", {
 	foreignKey({
 			columns: [table.userId],
 			foreignColumns: [users.id],
-			name: "sessions_user_id_users_id_fk"
+			name: "_uangku_sessions_user_id__uangku_users_id_fk"
 		}).onDelete("cascade"),
 ]);
 
-export const verificationTokens = pgTable("verification_tokens", {
+export const verificationTokens = pgTable("_uangku_verification_tokens", {
 	identifier: varchar({ length: 255 }).notNull(),
 	token: varchar({ length: 255 }).notNull(),
 	expires: timestamp("expires", { withTimezone: true, mode: 'string' }).notNull(),

@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
-import { OfflineStorage } from '@/lib/offline-storage';
+import { IndexedDBStorage } from '@/lib/indexeddb-storage';
 import { Wifi, WifiOff, RefreshCw, Database, Cloud, CloudOff } from 'lucide-react';
 
 export default function PwaTestPage() {
@@ -17,9 +17,21 @@ export default function PwaTestPage() {
 
   // Load offline transactions
   useEffect(() => {
-    const loadTransactions = () => {
-      const transactions = OfflineStorage.getAllOfflineTransactions();
-      setOfflineTransactions(transactions);
+    const loadTransactions = async () => {
+      try {
+        const transactions = await IndexedDBStorage.getAllOfflineTransactions();
+        setOfflineTransactions(transactions);
+      } catch (error) {
+        console.error('Error loading offline transactions from IndexedDB:', error);
+        // Fallback to localStorage
+        try {
+          const transactions = require('@/lib/offline-storage').OfflineStorage.getAllOfflineTransactions();
+          setOfflineTransactions(transactions);
+        } catch (fallbackError) {
+          console.error('Error loading offline transactions from localStorage:', fallbackError);
+          setOfflineTransactions([]);
+        }
+      }
     };
     
     loadTransactions();
@@ -39,7 +51,7 @@ export default function PwaTestPage() {
     }
   };
 
-  const handleTestOfflineStorage = () => {
+  const handleTestOfflineStorage = async () => {
     try {
       const testTransaction = {
         type: 'expense',
@@ -50,14 +62,21 @@ export default function PwaTestPage() {
         walletId: 'test-wallet'
       };
       
-      const id = OfflineStorage.addOfflineTransaction(testTransaction);
+      // Add to offline storage using IndexedDB
+      const id = await IndexedDBStorage.addOfflineTransaction(testTransaction);
       
       if (id) {
         setTestResult(`✅ Offline storage test successful. Transaction ID: ${id}`);
         
         // Refresh transaction list
-        const transactions = OfflineStorage.getAllOfflineTransactions();
-        setOfflineTransactions(transactions);
+        try {
+          const transactions = await IndexedDBStorage.getAllOfflineTransactions();
+          setOfflineTransactions(transactions);
+        } catch (error) {
+          console.error('Error loading offline transactions from IndexedDB:', error);
+          const transactions = require('@/lib/offline-storage').OfflineStorage.getAllOfflineTransactions();
+          setOfflineTransactions(transactions);
+        }
       } else {
         setTestResult('❌ Offline storage test failed');
       }
@@ -66,14 +85,20 @@ export default function PwaTestPage() {
     }
   };
 
-  const handleClearOfflineStorage = () => {
+  const handleClearOfflineStorage = async () => {
     try {
-      OfflineStorage.clearAll();
+      await IndexedDBStorage.clearAll();
       setTestResult('✅ Offline storage cleared successfully');
       
       // Refresh transaction list
-      const transactions = OfflineStorage.getAllOfflineTransactions();
-      setOfflineTransactions(transactions);
+      try {
+        const transactions = await IndexedDBStorage.getAllOfflineTransactions();
+        setOfflineTransactions(transactions);
+      } catch (error) {
+        console.error('Error loading offline transactions from IndexedDB:', error);
+        const transactions = require('@/lib/offline-storage').OfflineStorage.getAllOfflineTransactions();
+        setOfflineTransactions(transactions);
+      }
     } catch (error) {
       setTestResult(`❌ Failed to clear offline storage: ${(error as Error).message}`);
     }
@@ -85,8 +110,14 @@ export default function PwaTestPage() {
       setTestResult('✅ Manual sync initiated');
       
       // Refresh transaction list
-      const transactions = OfflineStorage.getAllOfflineTransactions();
-      setOfflineTransactions(transactions);
+      try {
+        const transactions = await IndexedDBStorage.getAllOfflineTransactions();
+        setOfflineTransactions(transactions);
+      } catch (error) {
+        console.error('Error loading offline transactions from IndexedDB:', error);
+        const transactions = require('@/lib/offline-storage').OfflineStorage.getAllOfflineTransactions();
+        setOfflineTransactions(transactions);
+      }
     } catch (error) {
       setTestResult(`❌ Manual sync failed: ${(error as Error).message}`);
     }

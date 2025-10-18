@@ -153,7 +153,7 @@ export default function BudgetSummary() {
                     <span className="ml-2 font-medium">{budget.categoryName}</span>
                   </div>
                   <span className="text-sm font-medium">
-                    {formatCurrency(budget.spentAmount)} / {formatCurrency(parseFloat(budget.allocatedAmount))}
+                    {formatCurrency(budget.spentAmount)} / {formatCurrency(budget.allocatedAmount)}
                   </span>
                 </div>
                 
@@ -170,7 +170,7 @@ export default function BudgetSummary() {
                 
                 <div className="flex justify-between text-xs text-gray-500">
                   <span>{budget.percentageUsed.toFixed(0)}% used</span>
-                  <span>{formatCurrency(parseFloat(budget.remainingAmount))} remaining</span>
+                  <span>{formatCurrency(budget.remainingAmount)} remaining</span>
                 </div>
               </div>
             );
