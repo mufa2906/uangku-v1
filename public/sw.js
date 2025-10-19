@@ -49,7 +49,32 @@ self.addEventListener('fetch', (event) => {
         })
     );
   }
-  // Handle API requests
+  // Handle authentication API requests specially - don't cache them
+  else if (event.request.url.includes('/api/auth/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // Don't cache auth responses to ensure fresh session data
+          return response;
+        })
+        .catch(() => {
+          // For auth requests when offline, return a specific response
+          return new Response(
+            JSON.stringify({ 
+              user: null,
+              session: null,
+              error: 'OFFLINE',
+              message: 'Currently in offline mode. Authentication will work when online.'
+            }), 
+            { 
+              status: 200, 
+              headers: { 'Content-Type': 'application/json' } 
+            }
+          );
+        })
+    );
+  }
+  // Handle other API requests
   else if (event.request.url.includes('/api/')) {
     event.respondWith(
       fetch(event.request)
@@ -57,7 +82,7 @@ self.addEventListener('fetch', (event) => {
           // Clone the response to cache
           const responseToCache = response.clone();
           
-          // Cache successful responses
+          // Cache successful responses for non-auth API requests
           if (response.ok) {
             caches.open(CACHE_NAME)
               .then((cache) => {

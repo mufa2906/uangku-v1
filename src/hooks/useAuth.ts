@@ -18,6 +18,7 @@ interface AuthReturnType {
   user: any | null; // Add user object to match Clerk's API (using BetterAuth)
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string; data?: any }>;
   signUp: (email: string, password: string, name?: string) => Promise<{ success: boolean; error?: string; data?: any }>;
+  refreshSession: () => Promise<any>;
 }
 
 export function useAuth(): AuthReturnType {
@@ -46,5 +47,6 @@ export function useAuth(): AuthReturnType {
     user: betterAuth.user, // Add user object
     signIn: betterAuth.signIn,
     signUp: betterAuth.signUp,
+    refreshSession: betterAuth.refreshSession,
   };
 }
