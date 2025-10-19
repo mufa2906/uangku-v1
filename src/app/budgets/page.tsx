@@ -11,6 +11,7 @@ import AppBottomNav from '@/components/shells/AppBottomNav';
 import { Budget, Category, Wallet } from '@/types';
 import BudgetFormSheet from '@/components/budgets/BudgetFormSheet';
 import { Progress } from '@/components/ui/progress';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 interface BudgetWithCategory extends Budget {
   categoryName: string | null;
@@ -249,15 +250,16 @@ export default function BudgetsPage() {
   }
 
   return (
-    <div className="pb-20"> {/* Space for bottom nav */}
-      <div className="p-4 max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Budgets</h1>
-          <Button onClick={handleCreateBudget}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Budget
-          </Button>
-        </div>
+    <ProtectedRoute>
+      <div className="pb-20"> {/* Space for bottom nav */}
+        <div className="p-4 max-w-4xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">Budgets</h1>
+            <Button onClick={handleCreateBudget}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Budget
+            </Button>
+          </div>
 
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
@@ -382,5 +384,6 @@ export default function BudgetsPage() {
       {/* Bottom Navigation */}
       <AppBottomNav />
     </div>
-  );
+  </ProtectedRoute>
+);
 }

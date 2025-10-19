@@ -14,6 +14,7 @@ import AppBottomNav from '@/components/shells/AppBottomNav';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 // Define wallet type
 interface WalletType {
@@ -193,11 +194,12 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="pb-20"> {/* Space for bottom nav */}
-      <div className="p-4 max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Profile</h1>
+    <ProtectedRoute>
+      <div className="pb-20"> {/* Space for bottom nav */}
+        <div className="p-4 max-w-4xl mx-auto">
+          <h1 className="text-2xl font-bold mb-6">Profile</h1>
 
-        <Card>
+          <Card>
           <CardHeader>
             <CardTitle>Account Information</CardTitle>
           </CardHeader>
@@ -466,5 +468,6 @@ export default function ProfilePage() {
       {/* Bottom Navigation */}
       <AppBottomNav />
     </div>
-  );
+  </ProtectedRoute>
+);
 }

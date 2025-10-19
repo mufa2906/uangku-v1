@@ -27,6 +27,7 @@ import { FloatingButton } from '@/components/ui/floating-button';
 import AppBottomNav from '@/components/shells/AppBottomNav';
 import { Wallet, Budget } from '@/types';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 // Extend Budget type with spending information
 type BudgetWithSpending = Budget & {
@@ -324,29 +325,30 @@ export default function WalletsPage() {
   }
 
   return (
-    <div className="pb-20"> {/* Space for bottom nav */}
-      <div className="p-4 max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Wallets & Budgets</h1>
-          <div className="flex gap-2">
-            <Button variant={activeTab === 'budgets' ? 'default' : 'outline'} onClick={() => setActiveTab('budgets')}>
-              <Target className="mr-2 h-4 w-4" />
-              Budgets
-            </Button>
-            <Button variant={activeTab === 'wallets' ? 'default' : 'outline'} onClick={() => setActiveTab('wallets')}>
-              <WalletIcon className="mr-2 h-4 w-4" />
-              Wallets
-            </Button>
+    <ProtectedRoute>
+      <div className="pb-20"> {/* Space for bottom nav */}
+        <div className="p-4 max-w-4xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">Wallets & Budgets</h1>
+            <div className="flex gap-2">
+              <Button variant={activeTab === 'budgets' ? 'default' : 'outline'} onClick={() => setActiveTab('budgets')}>
+                <Target className="mr-2 h-4 w-4" />
+                Budgets
+              </Button>
+              <Button variant={activeTab === 'wallets' ? 'default' : 'outline'} onClick={() => setActiveTab('wallets')}>
+                <WalletIcon className="mr-2 h-4 w-4" />
+                Wallets
+              </Button>
+            </div>
           </div>
-        </div>
 
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-red-700">{error}</p>
-          </div>
-        )}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-red-700">{error}</p>
+            </div>
+          )}
 
-        {/* Wallets Tab */}
+          {/* Wallets Tab */}
         {activeTab === 'wallets' && (
           <div>
             <div className="flex justify-between items-center mb-4">
@@ -607,5 +609,6 @@ export default function WalletsPage() {
       {/* Bottom Navigation */}
       <AppBottomNav />
     </div>
-  );
+  </ProtectedRoute>
+);
 }

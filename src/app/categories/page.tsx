@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Category } from '@/types';
 import AppBottomNav from '@/components/shells/AppBottomNav';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 export default function CategoriesPage() {
   const { userId } = useAuth();
@@ -139,11 +140,12 @@ export default function CategoriesPage() {
   };
 
   return (
-    <div className="pb-20"> {/* Space for bottom nav */}
-      <div className="p-4 max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Categories</h1>
+    <ProtectedRoute>
+      <div className="pb-20"> {/* Space for bottom nav */}
+        <div className="p-4 max-w-4xl mx-auto">
+          <h1 className="text-2xl font-bold mb-6">Categories</h1>
 
-        {/* Add Category Form */}
+          {/* Add Category Form */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Add New Category</CardTitle>
@@ -247,5 +249,6 @@ export default function CategoriesPage() {
       {/* Bottom Navigation */}
       <AppBottomNav />
     </div>
-  );
+  </ProtectedRoute>
+);
 }

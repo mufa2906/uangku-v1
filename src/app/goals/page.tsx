@@ -13,6 +13,7 @@ import GoalFormSheet from '@/components/goals/GoalFormSheet';
 import { Progress } from '@/components/ui/progress';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useToast, toast } from '@/components/ui/toast';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 interface GoalWithWallet extends Goal {
   walletName: string | null;
@@ -239,14 +240,15 @@ export default function GoalsPage() {
   }
 
   return (
-    <div className="pb-20"> {/* Space for bottom nav */}
-      <div className="p-4 max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Goals</h1>
-          <Button onClick={handleCreateGoal}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Goal
-          </Button>
+    <ProtectedRoute>
+      <div className="pb-20"> {/* Space for bottom nav */}
+        <div className="p-4 max-w-4xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">Goals</h1>
+            <Button onClick={handleCreateGoal}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Goal
+            </Button>
         </div>
 
         {error && (
@@ -407,5 +409,6 @@ export default function GoalsPage() {
       {/* Bottom Navigation */}
       <AppBottomNav />
     </div>
-  );
+  </ProtectedRoute>
+);
 }
