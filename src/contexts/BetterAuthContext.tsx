@@ -49,6 +49,7 @@ export function BetterAuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
+        // Use the correct BetterAuth session endpoint
         const response = await fetch('/api/auth/session');
         
         if (response.ok) {
@@ -57,9 +58,16 @@ export function BetterAuthProvider({ children }: { children: ReactNode }) {
             setUser(data.user);
             setSession(data.session);
           }
+        } else if (response.status === 401) {
+          // Not authenticated, clear user data
+          setUser(null);
+          setSession(null);
         }
       } catch (error) {
         console.error('Error checking auth status:', error);
+        // On network error, assume not authenticated but don't crash
+        setUser(null);
+        setSession(null);
       } finally {
         setIsLoaded(true);
       }
@@ -84,6 +92,8 @@ export function BetterAuthProvider({ children }: { children: ReactNode }) {
 
   // Refresh session function
   const refreshSession = async () => {
+    if (!isLoaded) return; // Don't refresh if not loaded yet
+    
     try {
       const response = await fetch('/api/auth/session');
       
@@ -97,9 +107,10 @@ export function BetterAuthProvider({ children }: { children: ReactNode }) {
           setUser(null);
           setSession(null);
         }
-      } else {
-        // API error, but don't automatically log out
-        console.warn('Session refresh failed:', response.status);
+      } else if (response.status === 401) {
+        // Not authenticated, clear user data
+        setUser(null);
+        setSession(null);
       }
     } catch (error) {
       // Network error, but don't automatically log out
