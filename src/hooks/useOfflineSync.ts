@@ -1,5 +1,5 @@
 // src/hooks/useOfflineSync.ts
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { IndexedDBStorage } from '@/lib/indexeddb-storage';
 import { OfflineStorage } from '@/lib/offline-storage'; // Keep for fallback
 import { Transaction } from '@/types';
