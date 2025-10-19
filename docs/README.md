@@ -1,55 +1,50 @@
-# Uangku Documentation
+# Uangku - Personal Finance Tracker
 
-## Current Status
-The Uangku application is feature-complete for its core financial management functionality. This documentation has been updated to reflect the current implementation status and future development priorities.
+**Uangku** is a comprehensive personal finance application designed for Indonesian users to easily manage money across multiple wallets, track expenses, and achieve financial goals with powerful yet intuitive budgeting tools.
 
-## Documentation Structure
-We've organized our documentation into three main categories for better accessibility and clarity:
+## 🚀 Features
+- **Multi-Wallet Management** - Track cash, bank, e-wallets, credit cards
+- **AI Transaction Input** - Natural language transaction entry
+- **Flexible Budgeting** - Category-linked and custom named budgets
+- **Goal Tracking** - Financial objectives with progress indicators
+- **Bill Reminders** - Recurring and one-time bill management
+- **PWA Functionality** - Offline capabilities and push notifications
+- **Accessibility** - High contrast, adjustable fonts, reduced motion
 
-### 🏗️ [App Documentation](app-docs/) 
-Technical documentation for developers and system understanding
-- [System Design](app-docs/SystemDesign.md) - Architecture and technical overview
-- [Data Model](app-docs/DataModel.md) - Database schema and relationships  
-- [Tech Stack](app-docs/TechStack.md) - Technology stack and development guidelines
-- [UI Guidelines](app-docs/UI_Guidelines.md) - UI/UX design principles and components
+## 🛠️ Tech Stack
+- **Frontend**: Next.js 14.2.33 (App Router, TypeScript)
+- **Styling**: TailwindCSS 3.4.3 + shadcn/ui
+- **Authentication**: BetterAuth (self-hosted)
+- **Backend**: Next.js API Routes
+- **Database**: Supabase PostgreSQL with Drizzle ORM
 
-### 🎯 [Feature Planning](feature-planning/)
-Planning documentation for development team and roadmap
-- [Product Requirements (PRD)](feature-planning/PRD.md) - Product requirements and vision
-- [Roadmap](feature-planning/Roadmap.md) - Updated feature roadmap with completed and planned features
-- [Development Planning](feature-planning/Development-Planning.md) - Development process and best practices
-- [Feature Plans](feature-planning/feature-plans/) - Individual feature specifications (completed and planned)
+## 📁 Documentation Structure
 
-### 👥 [User Documentation](user-docs/)
-User-focused documentation and guides
-- [Changelog](user-docs/Changelog.md) - Version history and feature updates
-- [User Guides](user-docs/user-guides/) - User guides for specific features
+### Core Documentation
+- **[Project Status & Deployment Guide](PROJECT_STATUS.md)** - Complete project status, deployment readiness, and implementation tasks
+- **[System Design](app-docs/SystemDesign.md)** - Architecture overview
+- **[Tech Stack](app-docs/TechStack.md)** - Development guidelines
+- **[Data Model](app-docs/DataModel.md)** - Database schema
 
-## Development Focus
-The application has completed all core functionality. Current development priorities are documented in:
-- [Development Plan](DEVELOPMENT_PLAN.md) - Overall development priorities
-- [Immediate Tasks](IMMEDIATE_TASKS.md) - Specific next steps to implement
+### Product Planning
+- **[Product Requirements](feature-planning/PRD.md)** - Vision and requirements
+- **[Roadmap](feature-planning/Roadmap.md)** - Feature priorities
+- **[Development Planning](feature-planning/Development-Planning.md)** - Process guidelines
 
-## Feature Status
-### ✅ Completed Features
-- Multi-wallet management
-- Transaction tracking with AI-powered entry
-- Flexible budgeting (category-linked and custom budgets)
-- Financial goal tracking
-- Bill reminders and scheduling
-- Currency support for Southeast Asian markets
-- Comprehensive dashboard with insights
-- Logout functionality with confirmation dialog
-- Navigation enhancement (centralized access in Profile page)
-- PWA implementation (offline capabilities and push notifications)
-- Authentication migration (Clerk to BetterAuth for reduced third-party dependencies)
+### User Documentation
+- **[Changelog](user-docs/Changelog.md)** - Version history
+- **[Budgeting Guide](user-docs/user-guides/budgeting-tools.md)** - Budget management
+- **[Goals Guide](user-docs/user-guides/goals-feature.md)** - Goal tracking
+- **[Bills Guide](user-docs/user-guides/bills-feature.md)** - Bill management
 
-### 🗓️ Future Features
-- Expense forecasting and prediction
-- Bank account integration
+### Implementation Details
+- **[Implementation Summary](IMPLEMENTATION_SUMMARY.md)** - Technical implementation details
+- **[PWA Summary](additional-docs/PWA_IMPLEMENTATION_SUMMARY.md)** - PWA functionality
+- **[Offline Testing](additional-docs/TESTING_OFFLINE.md)** - Offline functionality testing
 
-## For Different Audiences
-- **New Developers**: Start with the [System Design](app-docs/SystemDesign.md) and [Development Plan](DEVELOPMENT_PLAN.md)
-- **Developers**: Explore [App Documentation](app-docs/)
-- **Product Team**: Review [Feature Planning](feature-planning/) and [Immediate Tasks](IMMEDIATE_TASKS.md)
-- **End Users**: Check [User Documentation](user-docs/)
+## ✅ Status
+- **Production Ready**: Fully implemented and tested
+- **PWA Enabled**: Offline functionality with sync capabilities
+- **Self-Hosted Auth**: Migrated from Clerk to BetterAuth
+- **AI Integration**: Natural language transaction processing
+- **Accessibility Focused**: WCAG compliant design
