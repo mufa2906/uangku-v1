@@ -3,7 +3,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { 
   isPushSupported, 
   requestPushPermission, 
@@ -42,6 +42,7 @@ export function PWAProvider({ children }: { children: React.ReactNode }) {
   // Installation state
   const [isInstallable, setIsInstallable] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<(() => void) | null>(null);
+  const deferredPromptRef = useRef<Event | null>(null);
   
   // Online/offline state
   const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
@@ -62,33 +63,40 @@ export function PWAProvider({ children }: { children: React.ReactNode }) {
       e.preventDefault();
       
       // Stash the event so it can be triggered later
+      deferredPromptRef.current = e;
+      
+      // Set a function to show the install prompt
       setInstallPrompt(() => () => {
-        // Show the install prompt
-        (e as any).prompt();
-        
-        // Wait for the user to respond to the prompt
-        (e as any).userChoice.then((choiceResult: any) => {
-          if (choiceResult.outcome === 'accepted') {
-            console.log('User accepted the install prompt');
-          } else {
-            console.log('User dismissed the install prompt');
-          }
+        if (deferredPromptRef.current) {
+          // Show the install prompt
+          (deferredPromptRef.current as any).prompt();
           
-          // Clear the saved prompt since it can't be used again
-          setInstallPrompt(null);
-        });
+          // Wait for the user to respond to the prompt
+          (deferredPromptRef.current as any).userChoice.then((choiceResult: any) => {
+            if (choiceResult.outcome === 'accepted') {
+              console.log('User accepted the install prompt');
+            } else {
+              console.log('User dismissed the install prompt');
+            }
+            
+            // Clear the saved prompt since it can't be used again
+            setInstallPrompt(null);
+            deferredPromptRef.current = null;
+            setIsInstallable(false);
+          });
+        }
       });
       
       // Update UI to notify the user they can install the PWA
       setIsInstallable(true);
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt as EventListener);
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt as EventListener);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, []);
+  }, []); // Added proper dependency array
 
   // Handle online/offline events
   useEffect(() => {
@@ -125,9 +133,15 @@ export function PWAProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       // Listen for updates
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
+      const handleControllerChange = () => {
         setIsUpdateAvailable(true);
-      });
+      };
+      
+      navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
+
+      return () => {
+        navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+      };
     }
   }, []);
 

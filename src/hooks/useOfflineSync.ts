@@ -106,7 +106,7 @@ export function useOfflineSync(): UseOfflineSyncReturn {
   }, [initialized]);
 
   // Function to sync pending transactions
-  const syncPendingTransactions = async (): Promise<void> => {
+  const syncPendingTransactions = useCallback(async (): Promise<void> => {
     // Only run in browser environment
     if (!isBrowser) return;
     
@@ -205,7 +205,7 @@ export function useOfflineSync(): UseOfflineSyncReturn {
     }
     
     console.log(`Synced ${syncedCount} of ${offlineTransactions.length} transactions`);
-  };
+  }, [isOnline]); // Add useCallback with proper dependencies
 
   return {
     isOnline: isBrowser ? isOnline : true,
